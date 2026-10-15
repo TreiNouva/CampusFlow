@@ -21,26 +21,21 @@ export default async function OrganizationMembersPage({
   const user = await requireUser();
   const supabase = createClient();
 
-  const { data: organization } = await supabase
-    .from('organizations')
-    .select('id, name')
-    .eq('id', params.organizationId)
-    .single();
-  if (!organization) notFound();
-
-  const { data: myMembership } = await supabase
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', params.organizationId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (!myMembership) notFound();
-
-  const { data: members } = await supabase
-    .from('organization_members')
-    .select('id, role, profile:profiles(id, full_name, email)')
-    .eq('organization_id', params.organizationId)
-    .order('created_at', { ascending: true });
+  const [{ data: organization }, { data: myMembership }, { data: members }] = await Promise.all([
+    supabase.from('organizations').select('id, name').eq('id', params.organizationId).single(),
+    supabase
+      .from('organization_members')
+      .select('role')
+      .eq('organization_id', params.organizationId)
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('organization_members')
+      .select('id, role, profile:profiles(id, full_name, email)')
+      .eq('organization_id', params.organizationId)
+      .order('created_at', { ascending: true }),
+  ]);
+  if (!organization || !myMembership) notFound();
 
   return (
     <div className="min-h-screen bg-gray-50">

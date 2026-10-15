@@ -11,18 +11,20 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const supabase = createClient();
 
-  const { data: orgMemberships } = await supabase
-    .from('organization_members')
-    .select('organization:organizations(id, name, description)')
-    .eq('user_id', user.id);
-
-  const { data: myTasks } = await supabase
-    .from('tasks')
-    .select('id, title, status, priority, due_date, project:projects(id, name)')
-    .eq('assignee_id', user.id)
-    .neq('status', 'done')
-    .order('due_date', { ascending: true, nullsFirst: false })
-    .limit(6);
+  // Dua query independen -> dijalankan bersamaan, bukan satu per satu.
+  const [{ data: orgMemberships }, { data: myTasks }] = await Promise.all([
+    supabase
+      .from('organization_members')
+      .select('organization:organizations(id, name, description)')
+      .eq('user_id', user.id),
+    supabase
+      .from('tasks')
+      .select('id, title, status, priority, due_date, project:projects(id, name)')
+      .eq('assignee_id', user.id)
+      .neq('status', 'done')
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .limit(6),
+  ]);
 
   const organizations = (orgMemberships ?? [])
     .map((row: any) => row.organization)

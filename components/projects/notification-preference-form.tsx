@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react';
 import { updateNotificationPreference } from '@/actions/notification-actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
+import { cn, NETWORK_ERROR_MESSAGE } from '@/lib/utils';
 import type { NotificationLevel } from '@/types/database';
 
 const OPTIONS: { value: NotificationLevel; label: string; desc: string }[] = [
@@ -22,13 +23,24 @@ export function NotificationPreferenceForm({
 }) {
   const [selected, setSelected] = useState<NotificationLevel>(currentLevel);
   const [success, setSuccess] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     setSuccess(false);
+    setError(null);
+    setBusy(true);
     startTransition(async () => {
-      const result = await updateNotificationPreference(formData);
-      if (result.success) setSuccess(true);
+      try {
+        const result = await updateNotificationPreference(formData);
+        if (result.success) setSuccess(true);
+        else setError(result.error ?? 'Gagal menyimpan preferensi.');
+      } catch {
+        setError(NETWORK_ERROR_MESSAGE);
+      } finally {
+        setBusy(false);
+      }
     });
   }
 
@@ -61,13 +73,15 @@ export function NotificationPreferenceForm({
             </label>
           ))}
 
+          {error && <p className="text-sm text-red-600">{error}</p>}
           {success && <p className="text-sm text-green-600">Preferensi disimpan.</p>}
 
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Menyimpan...' : 'Simpan Preferensi'}
+          <Button type="submit" disabled={busy}>
+            {busy ? 'Menyimpan...' : 'Simpan Preferensi'}
           </Button>
         </form>
       </CardBody>
+      {busy && <LoadingOverlay label="Menyimpan preferensi..." />}
     </Card>
   );
 }

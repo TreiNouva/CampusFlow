@@ -15,33 +15,28 @@ export default async function OrganizationOverviewPage({
   const user = await requireUser();
   const supabase = createClient();
 
-  const { data: organization } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('id', params.organizationId)
-    .single();
+  // Empat query independen -> dijalankan bersamaan.
+  const [{ data: organization }, { data: membership }, { count: memberCount }, { data: projects }] =
+    await Promise.all([
+      supabase.from('organizations').select('*').eq('id', params.organizationId).single(),
+      supabase
+        .from('organization_members')
+        .select('role')
+        .eq('organization_id', params.organizationId)
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('organization_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', params.organizationId),
+      supabase
+        .from('projects')
+        .select('id, name, status, tasks(id, status)')
+        .eq('organization_id', params.organizationId)
+        .order('created_at', { ascending: false }),
+    ]);
 
-  if (!organization) notFound();
-
-  const { data: membership } = await supabase
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', params.organizationId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (!membership) notFound(); // RLS sudah menahan query di atas, ini pengaman tambahan di UI.
-
-  const { count: memberCount } = await supabase
-    .from('organization_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('organization_id', params.organizationId);
-
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('id, name, status, tasks(id, status)')
-    .eq('organization_id', params.organizationId)
-    .order('created_at', { ascending: false });
+  if (!organization || !membership) notFound(); // RLS sudah menahan query; ini pengaman tambahan di UI.
 
   return (
     <div className="min-h-screen bg-gray-50">

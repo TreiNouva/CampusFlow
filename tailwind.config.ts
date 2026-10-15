@@ -28,6 +28,17 @@ const config: Config = {
       borderRadius: {
         card: '0.75rem',
       },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+      },
+      animation: {
+        // Delay 150ms: kalau halaman termuat cepat, overlay tidak sempat muncul (tidak "berkedip").
+        'fade-in-delayed': 'fadeIn 0.2s ease-out 0.15s both',
+        'fade-in': 'fadeIn 0.15s ease-out both',
+      },
     },
   },
   plugins: [],

@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/', '/login', '/register'];
+const PUBLIC_PATHS = ['/', '/login', '/register', '/api/health'];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
@@ -26,18 +26,30 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() memverifikasi JWT secara lokal (cepat) sekaligus me-refresh
+  // session jika sudah kedaluwarsa. Fallback ke getUser() bila tidak berhasil.
+  let isLoggedIn = false;
+  try {
+    const { data, error } = await supabase.auth.getClaims();
+    isLoggedIn = !error && Boolean(data?.claims?.sub);
+  } catch {
+    isLoggedIn = false;
+  }
+  if (!isLoggedIn) {
+    const {
+      data: { user: fallbackUser },
+    } = await supabase.auth.getUser();
+    isLoggedIn = Boolean(fallbackUser);
+  }
 
   const isPublic = PUBLIC_PATHS.includes(request.nextUrl.pathname);
 
-  if (!user && !isPublic) {
+  if (!isLoggedIn && !isPublic) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
+  if (isLoggedIn && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

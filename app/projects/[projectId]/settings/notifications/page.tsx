@@ -4,8 +4,8 @@ import { Card, CardBody, CardHeader, Badge } from '@/components/ui/card';
 import { NotificationPreferenceForm } from '@/components/projects/notification-preference-form';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import { getNotificationPreferences, getNotificationLogs } from '@/actions/notification-actions';
 import { formatDateTime } from '@/lib/utils';
+import type { NotificationLevel, NotificationLog } from '@/types/database';
 
 const LOG_STATUS_COLOR: Record<string, string> = {
   sent: 'bg-green-100 text-green-700',
@@ -21,23 +21,27 @@ export default async function NotificationSettingsPage({
   const user = await requireUser();
   const supabase = createClient();
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, name')
-    .eq('id', params.projectId)
-    .single();
-  if (!project) notFound();
+  // Semua query dijalankan bersamaan. Level notifikasi diambil dari baris membership yang sama,
+  // dan log diambil langsung (RLS sudah membatasi hanya untuk anggota project).
+  const [{ data: project }, { data: membership }, { data: logRows }] = await Promise.all([
+    supabase.from('projects').select('id, name').eq('id', params.projectId).single(),
+    supabase
+      .from('project_members')
+      .select('role, notification_level')
+      .eq('project_id', params.projectId)
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('notification_logs')
+      .select('*')
+      .eq('project_id', params.projectId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+  ]);
+  if (!project || !membership) notFound();
 
-  const { data: membership } = await supabase
-    .from('project_members')
-    .select('role')
-    .eq('project_id', params.projectId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (!membership) notFound();
-
-  const currentLevel = await getNotificationPreferences(params.projectId);
-  const logs = await getNotificationLogs(params.projectId, 20);
+  const currentLevel = (membership.notification_level ?? 'important') as NotificationLevel;
+  const logs = (logRows ?? []) as NotificationLog[];
 
   return (
     <div className="min-h-screen bg-gray-50">

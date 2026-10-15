@@ -74,31 +74,29 @@ export async function sendProjectAnnouncement(formData: FormData): Promise<Actio
     return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
   }
 
-  const allowed = await canAccessProject(parsed.data.projectId, user.id);
+  const supabase = createClient();
+  const admin = createAdminClient();
+
+  // Semua pengambilan data independen dijalankan bersamaan.
+  const [allowed, { data: project }, { data: actorProfile }, { data: members }] = await Promise.all([
+    canAccessProject(parsed.data.projectId, user.id),
+    supabase.from('projects').select('name').eq('id', parsed.data.projectId).single(),
+    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+    admin
+      .from('project_members')
+      .select('user_id, notification_level, profile:profiles(id, full_name, email)')
+      .eq('project_id', parsed.data.projectId),
+  ]);
   if (!allowed) {
     return { success: false, error: 'Kamu bukan anggota project ini.' };
   }
 
-  const supabase = createClient();
-  const { data: project } = await supabase
-    .from('projects')
-    .select('name')
-    .eq('id', parsed.data.projectId)
-    .single();
-  const { data: actorProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
-
-  const admin = createAdminClient();
   await admin.from('activity_logs').insert({
     project_id: parsed.data.projectId,
     actor_id: user.id,
     action_type: 'project_announcement',
     new_value: parsed.data.title,
   });
-
-  const { data: members } = await admin
-    .from('project_members')
-    .select('user_id, notification_level, profile:profiles(id, full_name, email)')
-    .eq('project_id', parsed.data.projectId);
 
   const recipients = (members ?? [])
     .filter((row: any) => row.user_id !== user.id)

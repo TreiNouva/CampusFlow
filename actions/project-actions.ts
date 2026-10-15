@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/auth/session';
 import { createProjectSchema } from '@/lib/validations/schemas';
 import type { ActionResult } from './organization-actions';
@@ -56,22 +57,25 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
     return { success: false, error: error?.message ?? 'Gagal membuat project' };
   }
 
-  const { error: memberError } = await supabase.from('project_members').insert({
-    project_id: project.id,
-    user_id: user.id,
-    role: 'coordinator',
-    notification_level: 'all',
-  });
+  // Anggota (coordinator) & activity log tidak saling bergantung -> disimpan bersamaan.
+  // activity_logs hanya boleh ditulis oleh server (service role), bukan client biasa (lihat RLS).
+  const [{ error: memberError }] = await Promise.all([
+    supabase.from('project_members').insert({
+      project_id: project.id,
+      user_id: user.id,
+      role: 'coordinator',
+      notification_level: 'all',
+    }),
+    createAdminClient().from('activity_logs').insert({
+      project_id: project.id,
+      actor_id: user.id,
+      action_type: 'project_created',
+      new_value: parsed.data.name,
+    }),
+  ]);
   if (memberError) {
     return { success: false, error: memberError.message };
   }
-
-  await supabase.from('activity_logs').insert({
-    project_id: project.id,
-    actor_id: user.id,
-    action_type: 'project_created',
-    new_value: parsed.data.name,
-  });
 
   revalidatePath(`/organizations/${parsed.data.organizationId}`);
   return { success: true, data: { id: project.id } };

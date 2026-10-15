@@ -67,3 +67,17 @@ export function calcProgress(done: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((done / total) * 100);
 }
+
+/** Pesan standar saat request ke server gagal (koneksi putus / server lambat). */
+export const NETWORK_ERROR_MESSAGE =
+  'Koneksi bermasalah atau server sedang lambat. Coba lagi sebentar lagi.';
+
+/** Mengenali "error" redirect internal Next.js (bukan error sungguhan). */
+export function isNextRedirect(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'digest' in err &&
+    String((err as { digest?: unknown }).digest).startsWith('NEXT_REDIRECT')
+  );
+}

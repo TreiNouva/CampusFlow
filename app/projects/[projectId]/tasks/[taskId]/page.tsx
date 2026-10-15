@@ -17,32 +17,33 @@ export default async function TaskDetailPage({
   const user = await requireUser();
   const supabase = createClient();
 
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('*, assignee:profiles!tasks_assignee_id_fkey(id, full_name), creator:profiles!tasks_created_by_fkey(full_name)')
-    .eq('id', params.taskId)
-    .eq('project_id', params.projectId)
-    .single();
-  if (!task) notFound();
-
-  const { data: membership } = await supabase
-    .from('project_members')
-    .select('role')
-    .eq('project_id', params.projectId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (!membership) notFound();
-
-  const { data: members } = await supabase
-    .from('project_members')
-    .select('profile:profiles(id, full_name)')
-    .eq('project_id', params.projectId);
-
-  const { data: taskActivity } = await supabase
-    .from('activity_logs')
-    .select('*, actor:profiles!activity_logs_actor_id_fkey(id, full_name)')
-    .eq('task_id', params.taskId)
-    .order('created_at', { ascending: false });
+  const [{ data: task }, { data: membership }, { data: members }, { data: taskActivity }] =
+    await Promise.all([
+      supabase
+        .from('tasks')
+        .select(
+          '*, assignee:profiles!tasks_assignee_id_fkey(id, full_name), creator:profiles!tasks_created_by_fkey(full_name)'
+        )
+        .eq('id', params.taskId)
+        .eq('project_id', params.projectId)
+        .single(),
+      supabase
+        .from('project_members')
+        .select('role')
+        .eq('project_id', params.projectId)
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('project_members')
+        .select('profile:profiles(id, full_name)')
+        .eq('project_id', params.projectId),
+      supabase
+        .from('activity_logs')
+        .select('*, actor:profiles!activity_logs_actor_id_fkey(id, full_name)')
+        .eq('task_id', params.taskId)
+        .order('created_at', { ascending: false }),
+    ]);
+  if (!task || !membership) notFound();
 
   return (
     <div className="min-h-screen bg-gray-50">

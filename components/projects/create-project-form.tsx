@@ -6,22 +6,36 @@ import { createProject } from '@/actions/project-actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Input, Label, Textarea } from '@/components/ui/input';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
+import { NETWORK_ERROR_MESSAGE } from '@/lib/utils';
 
 export function CreateProjectForm({ organizationId }: { organizationId: string }) {
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   function handleSubmit(formData: FormData) {
     setError(null);
+    setBusy(true);
     startTransition(async () => {
-      const result = await createProject(formData);
-      if (!result.success) {
-        setError(result.error ?? 'Gagal membuat project.');
-        return;
-      }
-      if (result.data) {
-        router.push(`/projects/${result.data.id}`);
+      try {
+        const result = await createProject(formData);
+        if (!result.success) {
+          setError(result.error ?? 'Gagal membuat project.');
+          setBusy(false);
+          return;
+        }
+        if (result.data) {
+          // Overlay tetap tampil sampai halaman project terbuka.
+          router.push(`/projects/${result.data.id}`);
+        } else {
+          setBusy(false);
+        }
+      } catch {
+        // Sebelumnya error jaringan di sini membuat halaman crash ("client-side exception").
+        setError(NETWORK_ERROR_MESSAGE);
+        setBusy(false);
       }
     });
   }
@@ -53,11 +67,12 @@ export function CreateProjectForm({ organizationId }: { organizationId: string }
             </div>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Membuat...' : 'Buat Project'}
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? 'Membuat...' : 'Buat Project'}
           </Button>
         </form>
       </CardBody>
+      {busy && <LoadingOverlay label="Membuat project..." />}
     </Card>
   );
 }

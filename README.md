@@ -111,9 +111,9 @@ Buka [http://localhost:3000](http://localhost:3000).
 
 ## 5. Aturan Anti-Spam Email (§8) — di mana letaknya di kode
 
-Semua logika ini ada di `actions/task-actions.ts`, fungsi `resolveRecipients()` dan `notifyRecipients()`:
+Semua logika ini ada di `actions/task-actions.ts`, fungsi `fetchProjectMembers()`, `pickRecipients()` dan `notifyRecipients()`:
 
-- **Actor tidak pernah menerima email dari aksinya sendiri** → difilter di `resolveRecipients()`.
+- **Actor tidak pernah menerima email dari aksinya sendiri** → difilter di `pickRecipients()`.
 - **Hanya anggota project yang sah** → query dibatasi ke tabel `project_members`, ditegakkan ganda oleh Row Level Security.
 - **Preference All / Important only / Off** → `EVENT_IMPORTANCE` map + `isVisibleForLevel()`.
 - **Tidak mengirim email untuk perubahan kecil (title/description saja)** → `updateTask()` hanya membuat `changes[]` (dan memicu email) untuk field status, priority, due date, dan assignee.

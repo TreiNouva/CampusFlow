@@ -45,29 +45,33 @@ interface Recipient {
 }
 
 /**
- * resolveRecipients — jantung dari aturan anti-spam (§8):
+ * fetchProjectMembers() + pickRecipients() — jantung dari aturan anti-spam (§8):
  *   1) Hanya anggota project yang SAH yang bisa jadi penerima (§14 — email
  *      hanya dikirim kepada anggota project yang sah).
  *   2) Actor (pelaku perubahan) TIDAK PERNAH menerima email dari aksinya sendiri.
  *   3) Preference notifikasi per-anggota (All/Important/Off) dihormati.
  */
-async function resolveRecipients(
-  projectId: string,
-  actorId: string,
-  event: ActivityAction
-): Promise<Recipient[]> {
+interface MemberRow {
+  user_id: string;
+  notification_level: NotificationLevel;
+  profile: Profile | null;
+}
+
+/** Ambil anggota project + preferensi notifikasinya SEKALI saja (dipakai ulang untuk semua event). */
+async function fetchProjectMembers(projectId: string): Promise<MemberRow[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from('project_members')
     .select('user_id, notification_level, profile:profiles(id, full_name, email)')
     .eq('project_id', projectId);
+  return (data as unknown as MemberRow[]) ?? [];
+}
 
-  if (!data) return [];
-
-  return data
-    .filter((row: any) => row.user_id !== actorId)
-    .filter((row: any) => isVisibleForLevel(row.notification_level as NotificationLevel, event))
-    .map((row: any) => row.profile as Profile | null)
+function pickRecipients(members: MemberRow[], actorId: string, event: ActivityAction): Recipient[] {
+  return members
+    .filter((row) => row.user_id !== actorId)
+    .filter((row) => isVisibleForLevel(row.notification_level, event))
+    .map((row) => row.profile)
     .filter((p): p is Profile => Boolean(p))
     .map((p) => ({ id: p.id, email: p.email, full_name: p.full_name }));
 }
@@ -124,18 +128,17 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
     return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
   }
 
-  const allowed = await canAccessProject(parsed.data.projectId, user.id);
+  const supabase = createClient();
+
+  // Tiga pengecekan/pengambilan data independen -> dijalankan bersamaan.
+  const [allowed, { data: project }, { data: actorProfile }] = await Promise.all([
+    canAccessProject(parsed.data.projectId, user.id),
+    supabase.from('projects').select('id, name').eq('id', parsed.data.projectId).single(),
+    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+  ]);
   if (!allowed) {
     return { success: false, error: 'Kamu bukan anggota project ini.' };
   }
-
-  const supabase = createClient();
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, name')
-    .eq('id', parsed.data.projectId)
-    .single();
-  const { data: actorProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
 
   const { data: task, error } = await supabase
     .from('tasks')
@@ -166,7 +169,8 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
   });
 
   if (task.assignee_id) {
-    const recipients = (await resolveRecipients(parsed.data.projectId, user.id, 'task_created')).filter(
+    const members = await fetchProjectMembers(parsed.data.projectId);
+    const recipients = pickRecipients(members, user.id, 'task_created').filter(
       (r) => r.id === task.assignee_id
     );
 
@@ -215,11 +219,10 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
 
   const supabase = createClient();
 
-  const { data: currentTask, error: fetchError } = await supabase
-    .from('tasks')
-    .select('*, project:projects(id, name)')
-    .eq('id', parsed.data.taskId)
-    .single();
+  const [{ data: currentTask, error: fetchError }, { data: actorProfile }] = await Promise.all([
+    supabase.from('tasks').select('*, project:projects(id, name)').eq('id', parsed.data.taskId).single(),
+    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+  ]);
 
   if (fetchError || !currentTask) {
     return { success: false, error: 'Task tidak ditemukan.' };
@@ -231,7 +234,6 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
     return { success: false, error: 'Kamu tidak memiliki akses ke project ini.' };
   }
 
-  const { data: actorProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
   const actorName = actorProfile?.full_name ?? 'Seseorang';
   const projectName = (currentTask as any).project?.name ?? 'Project';
 
@@ -301,72 +303,86 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
 
   // Perubahan kecil (mis. hanya title/description) sengaja TIDAK memicu email
   // (§8: "Jangan mengirim email untuk refresh atau perubahan kecil yang tidak penting").
-  for (const change of changes) {
-    await admin.from('activity_logs').insert({
-      project_id: currentTask.project_id,
-      task_id: currentTask.id,
-      actor_id: user.id,
-      action_type: change.action,
-      old_value: String(change.oldValue),
-      new_value: String(change.newValue),
-    });
+  if (changes.length > 0) {
+    // Activity log semua perubahan disimpan sekaligus (1 query), anggota project diambil sekali.
+    const [, members] = await Promise.all([
+      admin.from('activity_logs').insert(
+        changes.map((change) => ({
+          project_id: currentTask.project_id,
+          task_id: currentTask.id,
+          actor_id: user.id,
+          action_type: change.action,
+          old_value: String(change.oldValue),
+          new_value: String(change.newValue),
+        }))
+      ),
+      fetchProjectMembers(currentTask.project_id),
+    ]);
 
-    const recipients = await resolveRecipients(currentTask.project_id, user.id, change.action);
+    // Email untuk tiap perubahan dikirim bersamaan (bukan berurutan) agar respons lebih cepat.
+    await Promise.all(
+      changes.map(async (change) => {
+        const recipients = pickRecipients(members, user.id, change.action);
 
-    if (change.action === 'task_assignee_changed' && updatedTask.assignee_id) {
-      const newAssignee = recipients.find((r) => r.id === updatedTask.assignee_id);
-      const others = recipients.filter((r) => r.id !== updatedTask.assignee_id);
+        if (change.action === 'task_assignee_changed' && updatedTask.assignee_id) {
+          const newAssignee = recipients.find((r) => r.id === updatedTask.assignee_id);
+          const others = recipients.filter((r) => r.id !== updatedTask.assignee_id);
 
-      if (newAssignee) {
+          await Promise.all([
+            newAssignee
+              ? notifyRecipients({
+                  projectId: currentTask.project_id,
+                  taskId: currentTask.id,
+                  event: change.action,
+                  recipients: [newAssignee],
+                  buildEmail: (recipient) =>
+                    taskAssignedEmail({
+                      recipientName: recipient.full_name,
+                      actorName,
+                      taskTitle: updatedTask.title,
+                      projectName,
+                      dueDate: formatDate(updatedTask.due_date),
+                      isNewTask: false,
+                      taskUrl,
+                    }),
+                })
+              : Promise.resolve(),
+            notifyRecipients({
+              projectId: currentTask.project_id,
+              taskId: currentTask.id,
+              event: change.action,
+              recipients: others,
+              buildEmail: (recipient) =>
+                taskUpdatedEmail({
+                  recipientName: recipient.full_name,
+                  actorName,
+                  taskTitle: updatedTask.title,
+                  projectName,
+                  changeSummary: change.summary,
+                  taskUrl,
+                }),
+            }),
+          ]);
+          return;
+        }
+
         await notifyRecipients({
           projectId: currentTask.project_id,
           taskId: currentTask.id,
           event: change.action,
-          recipients: [newAssignee],
+          recipients,
           buildEmail: (recipient) =>
-            taskAssignedEmail({
+            taskUpdatedEmail({
               recipientName: recipient.full_name,
               actorName,
               taskTitle: updatedTask.title,
               projectName,
-              dueDate: formatDate(updatedTask.due_date),
-              isNewTask: false,
+              changeSummary: change.summary,
               taskUrl,
             }),
         });
-      }
-      await notifyRecipients({
-        projectId: currentTask.project_id,
-        taskId: currentTask.id,
-        event: change.action,
-        recipients: others,
-        buildEmail: (recipient) =>
-          taskUpdatedEmail({
-            recipientName: recipient.full_name,
-            actorName,
-            taskTitle: updatedTask.title,
-            projectName,
-            changeSummary: change.summary,
-            taskUrl,
-          }),
-      });
-    } else {
-      await notifyRecipients({
-        projectId: currentTask.project_id,
-        taskId: currentTask.id,
-        event: change.action,
-        recipients,
-        buildEmail: (recipient) =>
-          taskUpdatedEmail({
-            recipientName: recipient.full_name,
-            actorName,
-            taskTitle: updatedTask.title,
-            projectName,
-            changeSummary: change.summary,
-            taskUrl,
-          }),
-      });
-    }
+      })
+    );
   }
 
   revalidatePath(`/projects/${currentTask.project_id}`);

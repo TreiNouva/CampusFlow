@@ -6,6 +6,8 @@ import { updateTask } from '@/actions/task-actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Input, Label, Select } from '@/components/ui/input';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
+import { NETWORK_ERROR_MESSAGE } from '@/lib/utils';
 import type { Task } from '@/types/database';
 
 interface Member {
@@ -16,21 +18,29 @@ interface Member {
 export function TaskDetailForm({ task, members }: { task: Task; members: Member[] }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   function handleSubmit(formData: FormData) {
     setError(null);
     setSuccess(false);
+    setBusy(true);
     formData.set('taskId', task.id);
     startTransition(async () => {
-      const result = await updateTask(formData);
-      if (!result.success) {
-        setError(result.error ?? 'Gagal memperbarui task.');
-        return;
+      try {
+        const result = await updateTask(formData);
+        if (!result.success) {
+          setError(result.error ?? 'Gagal memperbarui task.');
+          return;
+        }
+        setSuccess(true);
+        router.refresh();
+      } catch {
+        setError(NETWORK_ERROR_MESSAGE);
+      } finally {
+        setBusy(false);
       }
-      setSuccess(true);
-      router.refresh();
     });
   }
 
@@ -77,13 +87,14 @@ export function TaskDetailForm({ task, members }: { task: Task; members: Member[
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {success && <p className="text-sm text-green-600">Tersimpan. Email ke anggota terkait telah dikirim.</p>}
+          {success && <p className="text-sm text-green-600">Tersimpan. Email ke anggota terkait telah diproses.</p>}
 
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? 'Menyimpan...' : 'Simpan Perubahan'}
           </Button>
         </form>
       </CardBody>
+      {busy && <LoadingOverlay label="Menyimpan perubahan..." />}
     </Card>
   );
 }

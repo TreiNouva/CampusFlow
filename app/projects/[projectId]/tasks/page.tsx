@@ -14,31 +14,26 @@ export default async function TaskBoardPage({ params }: { params: { projectId: s
   const user = await requireUser();
   const supabase = createClient();
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, name')
-    .eq('id', params.projectId)
-    .single();
-  if (!project) notFound();
-
-  const { data: membership } = await supabase
-    .from('project_members')
-    .select('role')
-    .eq('project_id', params.projectId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (!membership) notFound();
-
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select('*, assignee:profiles!tasks_assignee_id_fkey(id, full_name)')
-    .eq('project_id', params.projectId)
-    .order('due_date', { ascending: true, nullsFirst: false });
-
-  const { data: members } = await supabase
-    .from('project_members')
-    .select('user_id, profile:profiles(id, full_name)')
-    .eq('project_id', params.projectId);
+  const [{ data: project }, { data: membership }, { data: tasks }, { data: members }] =
+    await Promise.all([
+      supabase.from('projects').select('id, name').eq('id', params.projectId).single(),
+      supabase
+        .from('project_members')
+        .select('role')
+        .eq('project_id', params.projectId)
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('tasks')
+        .select('*, assignee:profiles!tasks_assignee_id_fkey(id, full_name)')
+        .eq('project_id', params.projectId)
+        .order('due_date', { ascending: true, nullsFirst: false }),
+      supabase
+        .from('project_members')
+        .select('user_id, profile:profiles(id, full_name)')
+        .eq('project_id', params.projectId),
+    ]);
+  if (!project || !membership) notFound();
 
   const assignableMembers = (members ?? []).map((m: any) => m.profile).filter(Boolean);
 
@@ -46,7 +41,7 @@ export default async function TaskBoardPage({ params }: { params: { projectId: s
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="relative flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <Link href={`/projects/${project.id}`} className="text-xs font-semibold uppercase tracking-wide text-teal">
               ← Kembali ke {project.name}

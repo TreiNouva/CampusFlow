@@ -5,17 +5,29 @@ import Link from 'next/link';
 import { register } from '@/actions/auth-actions';
 import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/input';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
+import { isNextRedirect, NETWORK_ERROR_MESSAGE } from '@/lib/utils';
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     setError(null);
+    setBusy(true);
     startTransition(async () => {
-      const result = await register(formData);
-      if (result && !result.success) {
-        setError(result.error ?? 'Gagal mendaftar.');
+      try {
+        const result = await register(formData);
+        if (result && !result.success) {
+          setError(result.error ?? 'Gagal mendaftar.');
+          setBusy(false);
+        }
+        // Sukses: server mengarahkan ke /dashboard. Overlay tetap tampil sampai halaman berpindah.
+      } catch (err) {
+        if (isNextRedirect(err)) return;
+        setError(NETWORK_ERROR_MESSAGE);
+        setBusy(false);
       }
     });
   }
@@ -42,8 +54,8 @@ export default function RegisterPage() {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Memproses...' : 'Daftar'}
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? 'Memproses...' : 'Daftar'}
           </Button>
         </form>
 
@@ -54,6 +66,7 @@ export default function RegisterPage() {
           </Link>
         </p>
       </div>
+      {busy && <LoadingOverlay label="Membuat akun..." />}
     </main>
   );
 }

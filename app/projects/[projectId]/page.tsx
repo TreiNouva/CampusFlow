@@ -14,32 +14,28 @@ export default async function ProjectOverviewPage({ params }: { params: { projec
   const user = await requireUser();
   const supabase = createClient();
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('*, organization:organizations(id, name)')
-    .eq('id', params.projectId)
-    .single();
-  if (!project) notFound();
-
-  const { data: membership } = await supabase
-    .from('project_members')
-    .select('role')
-    .eq('project_id', params.projectId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (!membership) notFound();
-
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select('id, status')
-    .eq('project_id', params.projectId);
-
-  const { data: members } = await supabase
-    .from('project_members')
-    .select('id, role, profile:profiles(full_name)')
-    .eq('project_id', params.projectId);
-
-  const activity = await getProjectActivity(params.projectId, 10);
+  // Lima query independen -> dijalankan bersamaan (sebelumnya berurutan satu per satu).
+  const [{ data: project }, { data: membership }, { data: tasks }, { data: members }, activity] =
+    await Promise.all([
+      supabase
+        .from('projects')
+        .select('*, organization:organizations(id, name)')
+        .eq('id', params.projectId)
+        .single(),
+      supabase
+        .from('project_members')
+        .select('role')
+        .eq('project_id', params.projectId)
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase.from('tasks').select('id, status').eq('project_id', params.projectId),
+      supabase
+        .from('project_members')
+        .select('id, role, profile:profiles(full_name)')
+        .eq('project_id', params.projectId),
+      getProjectActivity(params.projectId, 10),
+    ]);
+  if (!project || !membership) notFound();
 
   const total = tasks?.length ?? 0;
   const done = tasks?.filter((t) => t.status === 'done').length ?? 0;

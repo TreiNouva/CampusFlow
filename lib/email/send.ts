@@ -26,7 +26,7 @@ const resendClient = resendApiKey ? new Resend(resendApiKey) : null;
  *
  * PENTING (§8 Aturan Email Notification): fungsi ini TIDAK memutuskan siapa
  * yang berhak menerima — filtering penerima & anti-spam dilakukan SEBELUM
- * memanggil fungsi ini (lihat actions/task-actions.ts -> resolveRecipients()).
+ * memanggil fungsi ini (lihat actions/task-actions.ts -> pickRecipients()).
  */
 export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<SendEmailResult> {
   if (!resendClient) {
