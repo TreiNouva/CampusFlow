@@ -65,3 +65,13 @@ export const projectAnnouncementSchema = z.object({
   title: z.string().min(3).max(150),
   body: z.string().min(1).max(2000),
 });
+
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password minimal 8 karakter'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Konfirmasi password tidak sama',
+    path: ['confirmPassword'],
+  });

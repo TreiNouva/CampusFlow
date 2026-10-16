@@ -160,3 +160,54 @@ multi-campus, native app.
 Dokumen spesifikasi menegaskan: **jangan mengklaim hasil validasi pengguna
 sebelum interview/usability testing benar-benar dilakukan.** README ini hanya
 mendokumentasikan cara kerja prototype, bukan hasil riset pengguna.
+
+
+## 10. Lupa Password (Forgot / Reset Password)
+
+Alur: **Login → "Lupa password?" → isi email → link dikirim lewat email → klik link →
+`/auth/callback` memverifikasi → `/reset-password` (isi password baru) → Dashboard.**
+
+Kode terkait: `components/auth/auth-page.tsx` (form lupa password), `app/auth/callback/route.ts`,
+`app/reset-password/page.tsx`, `components/auth/reset-password-view.tsx`, `actions/auth-actions.ts` (`updatePassword`).
+
+Tidak ada perubahan SQL dan tidak ada environment variable baru di Vercel. Yang perlu diatur
+ada di **dashboard Supabase** (email dikirim oleh Supabase Auth, bukan oleh kode kita):
+
+### 10.1 URL Configuration (WAJIB)
+Supabase → **Authentication → URL Configuration**:
+- **Site URL**: `https://NAMA-PROJECT.vercel.app` (domain Vercel kamu)
+- **Redirect URLs**, tambahkan:
+  - `https://NAMA-PROJECT.vercel.app/auth/callback`
+  - `http://localhost:3000/auth/callback` (untuk development lokal)
+
+Tanpa ini, link di email mengarah ke alamat yang salah / ditolak Supabase.
+
+### 10.2 Custom SMTP (WAJIB agar bisa dipakai user lain)
+Email bawaan Supabase hanya untuk testing: dibatasi sangat kecil (sekitar 2-4 email/jam) dan hanya bisa
+mengirim ke anggota tim project Supabase. Untuk user biasa, pasang SMTP sendiri, mis. Resend
+(Supabase → **Authentication → Emails → SMTP Settings → Enable Custom SMTP**):
+
+| Field | Nilai |
+|---|---|
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | API key Resend |
+| Sender email | alamat di domain yang sudah diverifikasi di Resend |
+
+Catatan: Resend umumnya mengharuskan domain yang sudah diverifikasi untuk mengirim ke alamat email orang lain.
+Pengaturan SMTP ini juga memperbaiki masalah "email rate limit" saat register dengan konfirmasi email.
+
+### 10.3 Template email (OPSIONAL, agar link bisa dibuka di perangkat lain)
+Secara default link harus dibuka di **browser yang sama** dengan tempat meminta reset (alur PKCE).
+Agar bisa dibuka di HP/perangkat lain, ubah template **Authentication → Email Templates → Reset Password**
+dengan link berikut (route `/auth/callback` sudah mendukungnya):
+
+```html
+<a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password">Atur ulang password</a>
+```
+
+### 10.4 Keamanan
+- Respons "email terkirim" selalu sama baik email terdaftar maupun tidak (tidak membocorkan daftar akun).
+- `/auth/callback` hanya mengizinkan tujuan `/reset-password` dan `/dashboard` (mencegah open redirect).
+- Supabase membatasi permintaan reset berulang; UI menampilkan hitung mundur 60 detik untuk "Kirim ulang".

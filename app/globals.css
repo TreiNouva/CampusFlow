@@ -28,8 +28,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 24px 16px 64px;
-  /* Gradient biru -> cyan sesuai referensi login */
-  background: linear-gradient(155deg, #4281d6 0%, #10e6fc 100%);
+  /* Cadangan sebelum canvas tergambar; latar sebenarnya digambar WaveBackground */
+  background: linear-gradient(155deg, #030c24 0%, #06193d 100%);
 }
 
 .auth-canvas {
@@ -204,6 +204,47 @@ body {
   text-decoration: underline;
 }
 
+/* --- Tautan teks, status "email terkirim", dan kartu tunggal (halaman reset) --- */
+.auth-link {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #12365e;
+  cursor: pointer;
+  text-decoration: none;
+}
+.auth-link:hover {
+  text-decoration: underline;
+}
+.auth-link-right {
+  align-self: flex-end;
+  margin-top: 6px;
+  color: #1c7293;
+}
+.auth-sent-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: #e6f4fa;
+  color: #1c7293;
+}
+.auth-btn-link {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+}
+.auth-single-body {
+  padding: 34px 26px 28px;
+}
+
 /* --- Panel geser: disembunyikan di HP --- */
 .auth-toggle-container {
   display: none;
@@ -363,6 +404,17 @@ body {
   }
   .auth-ghost:hover {
     background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (min-width: 768px) {
+  .auth-container.auth-single {
+    max-width: 440px;
+    min-height: 0;
+    border-radius: 24px;
+  }
+  .auth-single-body {
+    padding: 40px 40px 34px;
   }
 }
 
