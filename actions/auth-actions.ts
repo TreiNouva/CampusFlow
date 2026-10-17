@@ -10,6 +10,12 @@ import {
 } from '@/lib/validations/schemas';
 import type { ActionResult } from './organization-actions';
 
+/** Hanya izinkan kembali ke halaman undangan (/join/<token>); selain itu ke dashboard (cegah open redirect). */
+function safeNextPath(value: FormDataEntryValue | null): string {
+  const next = typeof value === 'string' ? value : '';
+  return /^\/join\/[A-Za-z0-9]{20,100}$/.test(next) ? next : '/dashboard';
+}
+
 export async function login(formData: FormData): Promise<ActionResult> {
   const parsed = loginSchema.safeParse({
     email: formData.get('email'),
@@ -29,7 +35,7 @@ export async function login(formData: FormData): Promise<ActionResult> {
     return { success: false, error: 'Email atau password salah.' };
   }
 
-  redirect('/dashboard');
+  redirect(safeNextPath(formData.get('next')));
 }
 
 export async function register(formData: FormData): Promise<ActionResult> {
@@ -55,7 +61,7 @@ export async function register(formData: FormData): Promise<ActionResult> {
     return { success: false, error: error.message };
   }
 
-  redirect('/dashboard');
+  redirect(safeNextPath(formData.get('next')));
 }
 
 export async function logout(): Promise<void> {

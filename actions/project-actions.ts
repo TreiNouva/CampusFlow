@@ -2,18 +2,18 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/auth/session';
 import { createProjectSchema } from '@/lib/validations/schemas';
+import { rpcErrorMessage } from '@/lib/rpc';
 import type { ActionResult } from './organization-actions';
 import type { ActivityLog } from '@/types/database';
 
 /**
- * createProject — Membuat project/event baru dalam sebuah organisasi.
- * Pembuat otomatis menjadi coordinator project tsb.
+ * createProject — Membuat project/event baru. Pembuat menjadi Project Manager (atau menunjuk anggota
+ * lain). Ketua organisasi otomatis ikut sebagai viewer. Semuanya dilakukan oleh fungsi database.
  */
 export async function createProject(formData: FormData): Promise<ActionResult<{ id: string }>> {
-  const user = await requireUser();
+  await requireUser();
 
   const parsed = createProjectSchema.safeParse({
     organizationId: formData.get('organizationId'),
@@ -21,64 +21,26 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
     description: formData.get('description') || undefined,
     startDate: formData.get('startDate') || undefined,
     endDate: formData.get('endDate') || undefined,
+    projectManagerId: formData.get('projectManagerId') || undefined,
   });
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
   }
 
-  // Siapa pun anggota organisasi boleh membuat project (bukan hanya admin) —
-  // sesuai skenario "Coordinator membuat project/event" di §12.
-  const supabase = createClient();
-  const { data: membership } = await supabase
-    .from('organization_members')
-    .select('id')
-    .eq('organization_id', parsed.data.organizationId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (!membership) {
-    return { success: false, error: 'Kamu bukan anggota organisasi ini.' };
-  }
-
-  const { data: project, error } = await supabase
-    .from('projects')
-    .insert({
-      organization_id: parsed.data.organizationId,
-      name: parsed.data.name,
-      description: parsed.data.description ?? null,
-      start_date: parsed.data.startDate ?? null,
-      end_date: parsed.data.endDate ?? null,
-      created_by: user.id,
-    })
-    .select('id')
-    .single();
-
-  if (error || !project) {
-    return { success: false, error: error?.message ?? 'Gagal membuat project' };
-  }
-
-  // Anggota (coordinator) & activity log tidak saling bergantung -> disimpan bersamaan.
-  // activity_logs hanya boleh ditulis oleh server (service role), bukan client biasa (lihat RLS).
-  const [{ error: memberError }] = await Promise.all([
-    supabase.from('project_members').insert({
-      project_id: project.id,
-      user_id: user.id,
-      role: 'coordinator',
-      notification_level: 'all',
-    }),
-    createAdminClient().from('activity_logs').insert({
-      project_id: project.id,
-      actor_id: user.id,
-      action_type: 'project_created',
-      new_value: parsed.data.name,
-    }),
-  ]);
-  if (memberError) {
-    return { success: false, error: memberError.message };
+  const { data, error } = await createClient().rpc('create_project', {
+    p_org: parsed.data.organizationId,
+    p_name: parsed.data.name,
+    p_description: parsed.data.description ?? null,
+    p_start: parsed.data.startDate ?? null,
+    p_end: parsed.data.endDate ?? null,
+    p_pm: parsed.data.projectManagerId ?? null,
+  });
+  if (error || !data) {
+    return { success: false, error: error ? rpcErrorMessage(error, 'Gagal membuat project.') : 'Gagal membuat project.' };
   }
 
   revalidatePath(`/organizations/${parsed.data.organizationId}`);
-  return { success: true, data: { id: project.id } };
+  return { success: true, data: { id: data as string } };
 }
 
 /** getProjectActivity — Mengambil histori aktivitas terbaru sebuah project (§13). */

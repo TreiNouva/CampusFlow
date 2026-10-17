@@ -38,7 +38,8 @@ campusflow/
 ├─ emails/                  # Template email (task-updated, task-assigned, project-announcement)
 ├─ types/database.ts        # Tipe TypeScript sesuai skema DB
 ├─ supabase/
-│  ├─ migrations/0001_init.sql   # Skema + Row Level Security
+│  ├─ migrations/0001_init.sql   # Skema awal
+│  ├─ migrations/0002_roles_invites_announcements.sql  # Role baru, divisi, undangan, pengumuman + RLS
 │  └─ seed.sql                   # Data simulasi "BINUS Student Festival Committee"
 └─ middleware.ts            # Proteksi route + refresh session
 ```
@@ -59,7 +60,9 @@ npm install
 ### 3.3 Setup Supabase
 
 1. Buat project baru di [supabase.com](https://supabase.com).
-2. Buka **SQL Editor**, jalankan isi `supabase/migrations/0001_init.sql`.
+2. Buka **SQL Editor** (New query), jalankan isi `supabase/migrations/0001_init.sql`, lalu **query baru** berisi
+   `supabase/migrations/0002_roles_invites_announcements.sql` (urutan wajib; 0002 menulis ulang semua aturan akses).
+   Database yang sudah berjalan cukup menjalankan 0002 saja (data lama dikonversi otomatis, lihat §11).
 3. (Opsional, untuk demo) Buat 3 user lewat **Authentication → Add user**:
    - `ketua@campusflow.demo`
    - `koordinator@campusflow.demo`
@@ -98,13 +101,13 @@ Buka [http://localhost:3000](http://localhost:3000).
 ## 4. Alur Demo End-to-End (§12 spesifikasi)
 
 1. Register/login sebagai **Ketua** → buat organisasi "BINUS Student Festival Committee".
-2. Tambah anggota (Coordinator, Member) lewat halaman **Members**.
-3. Sebagai **Coordinator**, buat project "BINUS Student Festival 2026".
+2. Undang anggota lewat link undangan atau email (halaman **Anggota & Undangan**).
+3. Sebagai anggota organisasi, buat project "BINUS Student Festival 2026" (kamu menjadi Project Manager; Ketua otomatis ikut sebagai viewer).
 4. Buat task, tetapkan **Member** sebagai PIC → Member menerima email "Kamu ditugaskan".
 5. Sebagai **Member**, ubah status task dari `In Progress` → `Done`.
 6. Sistem: menyimpan perubahan → membuat activity log → mengambil anggota project
    yang relevan (sesuai preference) → **mengecualikan Member sendiri** → mengirim
-   email ke Coordinator & Ketua → mencatat status di `notification_logs`.
+   email ke Project Manager & Ketua → mencatat status di `notification_logs`.
 7. Ketua membuka **Dashboard project** → melihat progress bertambah dan activity feed ter-update.
 8. Buka **Notification Settings → Log Pengiriman Email (Debug)** untuk memverifikasi
    siapa menerima apa, dan statusnya (`sent`/`failed`).
@@ -211,3 +214,53 @@ dengan link berikut (route `/auth/callback` sudah mendukungnya):
 - Respons "email terkirim" selalu sama baik email terdaftar maupun tidak (tidak membocorkan daftar akun).
 - `/auth/callback` hanya mengizinkan tujuan `/reset-password` dan `/dashboard` (mencegah open redirect).
 - Supabase membatasi permintaan reset berulang; UI menampilkan hitung mundur 60 detik untuk "Kirim ulang".
+
+
+## 11. Peran, Undangan, Divisi & Pengumuman (migrasi 0002)
+
+**Jalankan `0002_roles_invites_announcements.sql` di Supabase SQL Editor SEBELUM men-deploy kode ini**
+(kode memanggil fungsi database yang dibuat oleh 0002). Skrip berjalan dalam satu transaksi: jika gagal, tidak ada yang berubah.
+Jangan dijalankan dua kali.
+
+### 11.1 Peran organisasi
+| Peran | Jumlah | Hak |
+|---|---|---|
+| Ketua | Satu | Mengatur semua anggota & jabatan, mengeluarkan anggota, mengalihkan jabatan Ketua, otomatis menjadi **viewer** di semua project |
+| Wakil Ketua | Satu | Seperti Ketua kecuali menunjuk/mengubah Wakil Ketua dan mengalihkan Ketua |
+| Koordinator | Banyak | Membuat link undangan organisasi |
+| Sekretaris, Bendahara, Member | Banyak | Anggota biasa |
+
+### 11.2 Peran project
+Ketua (viewer), Project Manager (satu), Wakil Project Manager (satu), PIC, Koordinator, Bendahara, Sekretaris, Member.
+- **Ketua organisasi** otomatis menjadi anggota semua project dengan peran *Ketua* (hanya melihat; tidak mengubah task/pengumuman),
+  tetapi boleh mengatur keanggotaan (ubah peran, kick).
+- **Project Manager / Wakil PM**: mengatur anggota, divisi, mengedit/menghapus semua pengumuman. Hanya PM (atau Ketua/Wakil Ketua organisasi)
+  yang boleh menunjuk PM/Wakil PM; pemegang lama otomatis menjadi Member.
+- **Divisi** dibuat oleh PM/Wakil PM. PIC, Koordinator, dan Member yang masuk divisi mendapat title, mis. *Koordinator Acara*.
+- **Membuat pengumuman**: PM, Wakil PM, PIC, Koordinator, Sekretaris. **Mengubah task**: semua anggota kecuali Ketua.
+- **Link undangan project**: PM, Wakil PM, PIC, Koordinator (dan Ketua/Wakil Ketua organisasi).
+
+Aturan ini ditegakkan di database (fungsi SQL + RLS), dan dicerminkan di `lib/roles.ts` untuk tampilan. Untuk mengubah siapa boleh melakukan apa,
+ubah keduanya (SQL lewat migrasi baru).
+
+### 11.3 Undangan & gabung
+- Link `/join/<token>`: token acak panjang, berlaku 1–30 hari, opsional batas pemakaian, bisa dicabut.
+- Belum login → diarahkan ke Masuk/Daftar lalu kembali ke link. Link project otomatis memasukkan user ke organisasi (Member) bila belum.
+- Anggota organisasi juga bisa bergabung langsung ke project dari halaman organisasi (tombol *Gabung Project*).
+- Ketua / Wakil Ketua organisasi / PM / Wakil PM dapat mengeluarkan (kick) anggota. Task milik anggota yang dikeluarkan menjadi belum ditugaskan.
+
+### 11.4 Konversi data lama
+| Sebelumnya | Menjadi |
+|---|---|
+| Organisasi: admin pertama (pembuat) | Ketua |
+| Organisasi: admin lain, coordinator | Koordinator |
+| Organisasi: member, viewer | Member |
+| Project: coordinator pertama (pembuat) | Project Manager (project tanpa coordinator: pembuat/anggota tertua) |
+| Project: coordinator lain | Koordinator |
+| Project: member, viewer | Member |
+Ketua organisasi yang sudah menjadi anggota project berperan non-PM diubah menjadi *Ketua* (viewer). Jika Ketua kebetulan Project Manager project lama,
+perannya dipertahankan agar project tidak kehilangan manager; tunjuk PM baru agar Ketua menjadi viewer.
+
+### 11.5 Pengumuman
+Disimpan di tabel `announcements` sehingga tampil untuk semua anggota project (termasuk pembuatnya), bisa diedit/dihapus
+oleh pembuat atau PM/Wakil PM, dan dikirim lewat email (tidak ke pembuatnya sendiri). Saat edit, email ulang hanya jika dicentang.

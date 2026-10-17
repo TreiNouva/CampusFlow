@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
     isLoggedIn = Boolean(fallbackUser);
   }
 
-  const isPublic = PUBLIC_PATHS.includes(request.nextUrl.pathname);
+  const isPublic = PUBLIC_PATHS.includes(request.nextUrl.pathname) || request.nextUrl.pathname.startsWith('/join/');
 
   if (!isLoggedIn && !isPublic) {
     const loginUrl = new URL('/login', request.url);
@@ -50,7 +50,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isLoggedIn && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Jika datang dari halaman undangan, kembalikan ke sana; selain itu ke dashboard
+    const next = request.nextUrl.searchParams.get('next') ?? '';
+    const dest = /^\/join\/[A-Za-z0-9]{20,100}$/.test(next) ? next : '/dashboard';
+    return NextResponse.redirect(new URL(dest, request.url));
   }
 
   return response;

@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
+import { canWriteProjectRole } from '@/lib/roles';
 import type { OrgRole, ProjectRole } from '@/types/database';
 
 /**
- * Lapisan permission di sisi server. Ini adalah pengaman TAMBAHAN di
- * level aplikasi — pengaman utama tetap Row Level Security di database
- * (§14: "Server memeriksa authorization, bukan hanya frontend").
+ * Pemeriksaan hak akses di sisi server (lapisan tambahan). Penegak utamanya tetap
+ * Row Level Security + fungsi di database (lihat supabase/migrations/0002_*.sql).
  */
 
 export async function getOrgRole(organizationId: string, userId: string): Promise<OrgRole | null> {
@@ -14,7 +14,7 @@ export async function getOrgRole(organizationId: string, userId: string): Promis
     .select('role')
     .eq('organization_id', organizationId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   return (data?.role as OrgRole) ?? null;
 }
 
@@ -25,21 +25,16 @@ export async function getProjectRole(projectId: string, userId: string): Promise
     .select('role')
     .eq('project_id', projectId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   return (data?.role as ProjectRole) ?? null;
 }
 
-export async function isOrgAdmin(organizationId: string, userId: string): Promise<boolean> {
-  return (await getOrgRole(organizationId, userId)) === 'admin';
-}
-
-export async function canManageProject(projectId: string, userId: string): Promise<boolean> {
-  const role = await getProjectRole(projectId, userId);
-  return role === 'coordinator';
-}
-
-/** Member hanya boleh mengubah task yang ada di project yang dia ikuti (§14). */
+/** Anggota project mana pun (termasuk Ketua yang viewer): boleh MELIHAT. */
 export async function canAccessProject(projectId: string, userId: string): Promise<boolean> {
-  const role = await getProjectRole(projectId, userId);
-  return role !== null;
+  return (await getProjectRole(projectId, userId)) !== null;
+}
+
+/** Boleh MENGUBAH (buat/ubah task): semua anggota kecuali Ketua (viewer). */
+export async function canWriteProject(projectId: string, userId: string): Promise<boolean> {
+  return canWriteProjectRole(await getProjectRole(projectId, userId));
 }

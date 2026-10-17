@@ -33,7 +33,7 @@ export default async function NotificationSettingsPage({
       .maybeSingle(),
     supabase
       .from('notification_logs')
-      .select('*')
+      .select('*, recipient:profiles!notification_logs_recipient_id_fkey(full_name)')
       .eq('project_id', params.projectId)
       .order('created_at', { ascending: false })
       .limit(20),
@@ -59,10 +59,11 @@ export default async function NotificationSettingsPage({
 
         <Card className="mt-6">
           <CardHeader>
-            <h2 className="font-heading text-base font-bold text-ink">Log Pengiriman Email (Debug)</h2>
+            <h2 className="font-heading text-base font-bold text-ink">Riwayat Email Project Ini</h2>
             <p className="text-xs text-muted">
-              Untuk memverifikasi acceptance criteria: email hanya terkirim ke anggota yang sah, dan
-              actor tidak menerima email dari aksinya sendiri.
+              Daftar email yang dikirim sistem untuk project ini. Email hanya dikirim ke anggota project, dan orang yang
+              melakukan aksi (mis. yang membuat pengumuman) tidak dikirimi email atas aksinya sendiri. Isi aksinya tetap
+              bisa ia lihat langsung di halaman project.
             </p>
           </CardHeader>
           <CardBody className="p-0">
@@ -74,7 +75,9 @@ export default async function NotificationSettingsPage({
                   <li key={log.id} className="flex items-center justify-between px-5 py-3 text-sm">
                     <div>
                       <p className="font-medium text-ink">{log.event_type.replaceAll('_', ' ')}</p>
-                      <p className="text-xs text-muted">{formatDateTime(log.created_at)}</p>
+                      <p className="text-xs text-muted">
+                        ke {log.recipient?.full_name ?? 'anggota'} • {formatDateTime(log.created_at)}
+                      </p>
                     </div>
                     <Badge color={LOG_STATUS_COLOR[log.status]}>{log.status}</Badge>
                   </li>

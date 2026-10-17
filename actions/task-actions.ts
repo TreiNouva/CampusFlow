@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/auth/session';
-import { canAccessProject } from '@/lib/permissions';
+import { canWriteProject } from '@/lib/permissions';
+import { rpcErrorMessage } from '@/lib/rpc';
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations/schemas';
 import { sendEmail } from '@/lib/email/send';
 import { taskAssignedEmail } from '@/emails/task-assigned';
@@ -29,7 +30,10 @@ const EVENT_IMPORTANCE: Record<ActivityAction, 'all' | 'important'> = {
   task_commented: 'all',
   project_created: 'important',
   project_announcement: 'important',
+  announcement_updated: 'all',
   member_added: 'all',
+  member_removed: 'all',
+  member_role_changed: 'all',
 };
 
 function isVisibleForLevel(level: NotificationLevel, event: ActivityAction): boolean {
@@ -132,12 +136,12 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
 
   // Tiga pengecekan/pengambilan data independen -> dijalankan bersamaan.
   const [allowed, { data: project }, { data: actorProfile }] = await Promise.all([
-    canAccessProject(parsed.data.projectId, user.id),
+    canWriteProject(parsed.data.projectId, user.id),
     supabase.from('projects').select('id, name').eq('id', parsed.data.projectId).single(),
     supabase.from('profiles').select('full_name').eq('id', user.id).single(),
   ]);
   if (!allowed) {
-    return { success: false, error: 'Kamu bukan anggota project ini.' };
+    return { success: false, error: 'Kamu tidak dapat membuat task di project ini (Ketua hanya dapat melihat).' };
   }
 
   const { data: task, error } = await supabase
@@ -156,7 +160,7 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
 
   // §7: aktivitas & email hanya dibuat SETELAH insert task berhasil.
   if (error || !task) {
-    return { success: false, error: error?.message ?? 'Gagal membuat task' };
+    return { success: false, error: error ? rpcErrorMessage(error, 'Gagal membuat task') : 'Gagal membuat task' };
   }
 
   const admin = createAdminClient();
@@ -229,9 +233,9 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   }
 
   // Server memeriksa authorization, bukan hanya frontend (§14).
-  const allowed = await canAccessProject(currentTask.project_id, user.id);
+  const allowed = await canWriteProject(currentTask.project_id, user.id);
   if (!allowed) {
-    return { success: false, error: 'Kamu tidak memiliki akses ke project ini.' };
+    return { success: false, error: 'Kamu tidak dapat mengubah task di project ini (Ketua hanya dapat melihat).' };
   }
 
   const actorName = actorProfile?.full_name ?? 'Seseorang';
@@ -259,7 +263,7 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   // §7: "Email tidak boleh dikirim sebelum database memastikan perubahan berhasil."
   // Jika update gagal, fungsi berhenti di sini — tidak ada activity log / email.
   if (updateError || !updatedTask) {
-    return { success: false, error: updateError?.message ?? 'Gagal memperbarui task.' };
+    return { success: false, error: updateError ? rpcErrorMessage(updateError, 'Gagal memperbarui task.') : 'Gagal memperbarui task.' };
   }
 
   const admin = createAdminClient();

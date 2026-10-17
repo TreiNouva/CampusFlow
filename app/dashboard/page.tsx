@@ -5,7 +5,8 @@ import { CreateOrganizationForm } from '@/components/dashboard/create-organizati
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate, PRIORITY_COLOR, PRIORITY_LABEL, STATUS_COLOR, STATUS_LABEL } from '@/lib/utils';
-import type { TaskPriority, TaskStatus } from '@/types/database';
+import { OrgRoleBadge } from '@/components/ui/role-badge';
+import type { OrgRole, TaskPriority, TaskStatus } from '@/types/database';
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -15,7 +16,7 @@ export default async function DashboardPage() {
   const [{ data: orgMemberships }, { data: myTasks }] = await Promise.all([
     supabase
       .from('organization_members')
-      .select('organization:organizations(id, name, description)')
+      .select('role, organization:organizations(id, name, description)')
       .eq('user_id', user.id),
     supabase
       .from('tasks')
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
   ]);
 
   const organizations = (orgMemberships ?? [])
-    .map((row: any) => row.organization)
+    .map((row: any) => (row.organization ? { ...row.organization, myRole: row.role as OrgRole } : null))
     .filter(Boolean);
 
   return (
@@ -54,7 +55,10 @@ export default async function DashboardPage() {
                 <Link key={org.id} href={`/organizations/${org.id}`}>
                   <Card className="h-full transition hover:border-navy">
                     <CardBody>
-                      <h3 className="font-heading text-base font-bold text-ink">{org.name}</h3>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-heading text-base font-bold text-ink">{org.name}</h3>
+                        <OrgRoleBadge role={org.myRole} />
+                      </div>
                       <p className="mt-1 line-clamp-2 text-sm text-muted">{org.description || 'Tidak ada deskripsi.'}</p>
                     </CardBody>
                   </Card>

@@ -30,8 +30,11 @@ const inertRef = (isInert: boolean) => (el: HTMLElement | null) => {
 export function AuthPage({
   initialMode,
   initialForgot = false,
+  nextPath,
 }: {
   initialMode: Mode;
+  /** Halaman tujuan setelah masuk/daftar (hanya /join/<token>, dari halaman undangan). */
+  nextPath?: string;
   /** Buka langsung form "Lupa password" (dari /login?forgot=1). */
   initialForgot?: boolean;
 }) {
@@ -43,7 +46,7 @@ export function AuthPage({
     setMode(next);
     try {
       // Sinkronkan URL (/login <-> /register) tanpa memuat ulang halaman.
-      window.history.replaceState(null, '', next === 'login' ? '/login' : '/register');
+      window.history.replaceState(null, '', (next === 'login' ? '/login' : '/register') + window.location.search);
     } catch {
       // abaikan: URL tidak berubah, tampilan tetap berfungsi
     }
@@ -56,7 +59,7 @@ export function AuthPage({
       <div className={cn('auth-container', isRegister && 'active')}>
         {/* Form Daftar */}
         <section className="auth-form-container auth-sign-up" ref={inertRef(!isRegister)} aria-hidden={!isRegister}>
-          <RegisterForm onBusyChange={setOverlayLabel} onSwitch={() => switchMode('login')} />
+          <RegisterForm onBusyChange={setOverlayLabel} onSwitch={() => switchMode('login')} nextPath={nextPath} />
         </section>
 
         {/* Form Masuk */}
@@ -65,6 +68,7 @@ export function AuthPage({
             onBusyChange={setOverlayLabel}
             onSwitch={() => switchMode('register')}
             initialView={initialForgot ? 'forgot' : 'login'}
+            nextPath={nextPath}
           />
         </section>
 
@@ -105,7 +109,8 @@ function LoginForm({
   onBusyChange,
   onSwitch,
   initialView = 'login',
-}: FormProps & { initialView?: LoginView }) {
+  nextPath,
+}: FormProps & { initialView?: LoginView; nextPath?: string }) {
   const [view, setView] = useState<LoginView>(initialView);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -270,6 +275,7 @@ function LoginForm({
   // ---------- Tampilan: Masuk ----------
   return (
     <form key="view-login" className="auth-form" onSubmit={handleLogin}>
+      {nextPath && <input type="hidden" name="next" value={nextPath} />}
       <span className="auth-brand">CampusFlow</span>
       <h1 className="auth-title">Masuk</h1>
       <p className="auth-sub">Gunakan email dan password akunmu.</p>
@@ -327,7 +333,7 @@ function LoginForm({
   );
 }
 
-function RegisterForm({ onBusyChange, onSwitch }: FormProps) {
+function RegisterForm({ onBusyChange, onSwitch, nextPath }: FormProps & { nextPath?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
@@ -359,6 +365,7 @@ function RegisterForm({ onBusyChange, onSwitch }: FormProps) {
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
+      {nextPath && <input type="hidden" name="next" value={nextPath} />}
       <span className="auth-brand">CampusFlow</span>
       <h1 className="auth-title">Buat Akun</h1>
       <p className="auth-sub">Gratis untuk organisasi kampus.</p>

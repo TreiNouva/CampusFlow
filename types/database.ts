@@ -2,8 +2,16 @@
 // Untuk proyek production sungguhan, generate otomatis lewat:
 //   npx supabase gen types typescript --project-id <id> > types/database.ts
 
-export type OrgRole = 'admin' | 'coordinator' | 'member' | 'viewer';
-export type ProjectRole = 'coordinator' | 'member' | 'viewer';
+export type OrgRole = 'ketua' | 'wakil_ketua' | 'koordinator' | 'sekretaris' | 'bendahara' | 'member';
+export type ProjectRole =
+  | 'ketua'
+  | 'project_manager'
+  | 'wakil_project_manager'
+  | 'pic'
+  | 'koordinator'
+  | 'bendahara'
+  | 'sekretaris'
+  | 'member';
 export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type NotificationLevel = 'all' | 'important' | 'off';
@@ -18,7 +26,10 @@ export type ActivityAction =
   | 'task_commented'
   | 'project_created'
   | 'project_announcement'
-  | 'member_added';
+  | 'announcement_updated'
+  | 'member_added'
+  | 'member_removed'
+  | 'member_role_changed';
 
 export interface Profile {
   id: string;
@@ -63,8 +74,42 @@ export interface ProjectMember {
   user_id: string;
   role: ProjectRole;
   notification_level: NotificationLevel;
+  division_id: string | null;
   created_at: string;
   profile?: Profile;
+  division?: ProjectDivision | null;
+}
+
+export interface ProjectDivision {
+  id: string;
+  project_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface Announcement {
+  id: string;
+  project_id: string;
+  author_id: string;
+  title: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  author?: Pick<Profile, 'id' | 'full_name'> | null;
+}
+
+export interface Invite {
+  id: string;
+  token: string;
+  organization_id: string;
+  project_id: string | null;
+  division_id: string | null;
+  created_by: string;
+  expires_at: string;
+  max_uses: number | null;
+  uses_count: number;
+  revoked_at: string | null;
+  created_at: string;
 }
 
 export interface Task {
@@ -106,6 +151,7 @@ export interface ActivityLog {
 }
 
 export interface NotificationLog {
+  recipient?: { full_name: string } | null;
   id: string;
   event_type: ActivityAction;
   recipient_id: string;

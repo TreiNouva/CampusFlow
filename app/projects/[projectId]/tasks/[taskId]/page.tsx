@@ -7,7 +7,8 @@ import { ActivityFeed } from '@/components/projects/activity-feed';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/utils';
-import type { ActivityLog } from '@/types/database';
+import { canWriteProjectRole } from '@/lib/roles';
+import type { ActivityLog, ProjectRole } from '@/types/database';
 
 export default async function TaskDetailPage({
   params,
@@ -35,7 +36,7 @@ export default async function TaskDetailPage({
         .maybeSingle(),
       supabase
         .from('project_members')
-        .select('profile:profiles(id, full_name)')
+        .select('role, profile:profiles(id, full_name)')
         .eq('project_id', params.projectId),
       supabase
         .from('activity_logs')
@@ -83,10 +84,18 @@ export default async function TaskDetailPage({
           </div>
 
           <div>
-            <TaskDetailForm
-              task={task}
-              members={(members ?? []).map((m: any) => m.profile).filter(Boolean)}
-            />
+            {canWriteProjectRole(membership.role as ProjectRole) ? (
+              <TaskDetailForm
+                task={task}
+                members={(members ?? []).filter((m: any) => m.role !== 'ketua').map((m: any) => m.profile).filter(Boolean)}
+              />
+            ) : (
+              <Card>
+                <CardBody className="text-sm text-muted">
+                  Kamu melihat task ini sebagai Ketua (viewer), jadi tidak bisa mengubahnya.
+                </CardBody>
+              </Card>
+            )}
           </div>
         </div>
       </main>

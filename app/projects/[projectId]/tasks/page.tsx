@@ -6,7 +6,8 @@ import { TaskCard } from '@/components/tasks/task-card';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { STATUS_LABEL } from '@/lib/utils';
-import type { TaskStatus } from '@/types/database';
+import { canWriteProjectRole } from '@/lib/roles';
+import type { ProjectRole, TaskStatus } from '@/types/database';
 
 const COLUMNS: TaskStatus[] = ['todo', 'in_progress', 'done', 'blocked'];
 
@@ -30,12 +31,17 @@ export default async function TaskBoardPage({ params }: { params: { projectId: s
         .order('due_date', { ascending: true, nullsFirst: false }),
       supabase
         .from('project_members')
-        .select('user_id, profile:profiles(id, full_name)')
+        .select('user_id, role, profile:profiles(id, full_name)')
         .eq('project_id', params.projectId),
     ]);
   if (!project || !membership) notFound();
 
-  const assignableMembers = (members ?? []).map((m: any) => m.profile).filter(Boolean);
+  // Ketua hanya viewer: tidak bisa ditugaskan task
+  const assignableMembers = (members ?? [])
+    .filter((m: any) => m.role !== 'ketua')
+    .map((m: any) => m.profile)
+    .filter(Boolean);
+  const canWrite = canWriteProjectRole(membership.role as ProjectRole);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,7 +54,11 @@ export default async function TaskBoardPage({ params }: { params: { projectId: s
             </Link>
             <h1 className="font-heading text-2xl font-bold text-ink">Task Board</h1>
           </div>
-          <CreateTaskForm projectId={project.id} members={assignableMembers} />
+          {canWrite ? (
+            <CreateTaskForm projectId={project.id} members={assignableMembers} />
+          ) : (
+            <span className="rounded-lg bg-sky/40 px-3 py-1.5 text-xs text-navy">Mode lihat (Ketua)</span>
+          )}
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">

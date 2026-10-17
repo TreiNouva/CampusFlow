@@ -10,7 +10,10 @@ const ACTION_LABEL: Record<string, string> = {
   task_commented: 'berkomentar pada task',
   project_created: 'membuat project ini',
   project_announcement: 'membuat pengumuman',
+  announcement_updated: 'memperbarui pengumuman',
   member_added: 'menambahkan anggota',
+  member_removed: 'mengeluarkan anggota',
+  member_role_changed: 'mengubah peran anggota',
 };
 
 export function ActivityFeed({ activity }: { activity: ActivityLog[] }) {
@@ -31,6 +34,11 @@ export function ActivityFeed({ activity }: { activity: ActivityLog[] }) {
                 <>
                   {' '}
                   — <span className="font-medium">{log.task.title}</span>
+                </>
+              ) : !log.task_id && log.new_value && log.action_type !== 'project_created' ? (
+                <>
+                  {' '}
+                  — <span className="font-medium">{log.new_value}</span>
                 </>
               ) : null}
               {log.action_type === 'task_status_changed' && log.old_value && log.new_value ? (
