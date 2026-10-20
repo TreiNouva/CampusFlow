@@ -7,6 +7,7 @@ import { Input, Label, Textarea } from '@/components/ui/input';
 import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { useAction } from '@/lib/use-action';
 import { formatDateTime } from '@/lib/utils';
+import { divisionColor, GLOBAL_COLOR } from '@/lib/colors';
 import type { Announcement } from '@/types/database';
 
 interface Props {
@@ -97,7 +98,10 @@ function AnnouncementItem({
       ) : (
         <>
           <div className="flex items-start justify-between gap-3">
-            <h3 className="font-heading text-sm font-bold text-ink">{announcement.title}</h3>
+            <div className="min-w-0">
+              <ScopeBadge announcement={announcement} />
+              <h3 className="mt-1 font-heading text-sm font-bold text-ink">{announcement.title}</h3>
+            </div>
             {canEdit && (
               <div className="flex shrink-0 gap-1.5">
                 <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)} disabled={busy}>
@@ -119,5 +123,18 @@ function AnnouncementItem({
       )}
       {busy && !editing && <LoadingOverlay label="Memproses..." />}
     </li>
+  );
+}
+
+function ScopeBadge({ announcement }: { announcement: Announcement }) {
+  const c = announcement.division ? divisionColor(announcement.division.color) : GLOBAL_COLOR;
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+      style={{ backgroundColor: c.bg, color: c.text }}
+    >
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: c.accent }} />
+      {announcement.division ? `Divisi ${announcement.division.name}` : 'Global'}
+    </span>
   );
 }

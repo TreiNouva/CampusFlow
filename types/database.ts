@@ -12,7 +12,10 @@ export type ProjectRole =
   | 'bendahara'
   | 'sekretaris'
   | 'member';
-export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked';
+export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
+export type AttendanceStatus = 'present' | 'excused' | 'absent';
+export type BudgetEntryType = 'income' | 'expense';
+export type DocumentCategory = 'proposal' | 'lpj' | 'rundown' | 'notulen' | 'desain' | 'surat' | 'lainnya';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type NotificationLevel = 'all' | 'important' | 'off';
 export type NotificationStatus = 'pending' | 'sent' | 'failed';
@@ -29,7 +32,9 @@ export type ActivityAction =
   | 'announcement_updated'
   | 'member_added'
   | 'member_removed'
-  | 'member_role_changed';
+  | 'member_role_changed'
+  | 'document_uploaded'
+  | 'event_created';
 
 export interface Profile {
   id: string;
@@ -84,6 +89,7 @@ export interface ProjectDivision {
   id: string;
   project_id: string;
   name: string;
+  color: string;
   created_at: string;
 }
 
@@ -93,9 +99,11 @@ export interface Announcement {
   author_id: string;
   title: string;
   body: string;
+  division_id: string | null;
   created_at: string;
   updated_at: string;
   author?: Pick<Profile, 'id' | 'full_name'> | null;
+  division?: Pick<ProjectDivision, 'id' | 'name' | 'color'> | null;
 }
 
 export interface Invite {
@@ -121,10 +129,14 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   due_date: string | null;
+  start_date: string | null;
+  completed_at: string | null;
+  division_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
   assignee?: Profile | null;
+  division?: Pick<ProjectDivision, 'id' | 'name' | 'color'> | null;
 }
 
 export interface Comment {
@@ -179,4 +191,69 @@ export interface ProjectWithProgress extends Project {
   task_count: number;
   done_count: number;
   member_count: number;
+}
+
+export interface ProjectEvent {
+  id: string;
+  project_id: string;
+  division_id: string | null;
+  title: string;
+  description: string | null;
+  location: string | null;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  created_by: string;
+  created_at: string;
+}
+
+export interface EventAttendance {
+  event_id: string;
+  user_id: string;
+  status: AttendanceStatus;
+  checked_in_at: string | null;
+}
+
+export interface ProjectMilestone {
+  id: string;
+  project_id: string;
+  title: string;
+  due_date: string;
+  created_by: string;
+}
+
+export interface BudgetPlan {
+  id: string;
+  project_id: string;
+  division_id: string | null;
+  category: string;
+  planned_amount: number;
+}
+
+export interface BudgetEntry {
+  id: string;
+  project_id: string;
+  division_id: string | null;
+  entry_type: BudgetEntryType;
+  category: string;
+  amount: number;
+  note: string | null;
+  entry_date: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface DocumentRow {
+  id: string;
+  project_id: string;
+  task_id: string | null;
+  division_id: string | null;
+  category: DocumentCategory;
+  name: string;
+  storage_path: string;
+  mime_type: string | null;
+  size_bytes: number;
+  uploaded_by: string;
+  created_at: string;
+  uploader?: Pick<Profile, 'id' | 'full_name'> | null;
 }

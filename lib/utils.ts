@@ -29,6 +29,7 @@ export function formatDateTime(value: string | null | undefined): string {
 export const STATUS_LABEL: Record<TaskStatus, string> = {
   todo: 'To Do',
   in_progress: 'In Progress',
+  review: 'Review',
   done: 'Done',
   blocked: 'Blocked',
 };
@@ -36,6 +37,7 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
 export const STATUS_COLOR: Record<TaskStatus, string> = {
   todo: 'bg-gray-100 text-gray-700',
   in_progress: 'bg-sky text-navy',
+  review: 'bg-purple-100 text-purple-700',
   done: 'bg-green-100 text-green-700',
   blocked: 'bg-red-100 text-red-700',
 };
@@ -80,4 +82,14 @@ export function isNextRedirect(err: unknown): boolean {
     'digest' in err &&
     String((err as { digest?: unknown }).digest).startsWith('NEXT_REDIRECT')
   );
+}
+
+export function formatRupiah(n: number | null | undefined): string {
+  return 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(Number(n ?? 0)));
+}
+
+export function formatBytes(b: number): string {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
 }

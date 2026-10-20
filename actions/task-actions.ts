@@ -12,7 +12,7 @@ import { taskAssignedEmail } from '@/emails/task-assigned';
 import { taskUpdatedEmail } from '@/emails/task-updated';
 import { formatDate, STATUS_LABEL } from '@/lib/utils';
 import type { ActionResult } from './organization-actions';
-import type { ActivityAction, NotificationLevel, Profile, TaskStatus } from '@/types/database';
+import type { ActivityAction, NotificationLevel, Profile, ProjectRole, TaskStatus } from '@/types/database';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
@@ -34,6 +34,8 @@ const EVENT_IMPORTANCE: Record<ActivityAction, 'all' | 'important'> = {
   member_added: 'all',
   member_removed: 'all',
   member_role_changed: 'all',
+  document_uploaded: 'all',
+  event_created: 'all',
 };
 
 function isVisibleForLevel(level: NotificationLevel, event: ActivityAction): boolean {
@@ -57,8 +59,29 @@ interface Recipient {
  */
 interface MemberRow {
   user_id: string;
+  role: ProjectRole;
+  division_id: string | null;
   notification_level: NotificationLevel;
   profile: Profile | null;
+}
+
+/** Hanya field yang menentukan siapa yang boleh melihat sebuah task. */
+interface TaskScope {
+  division_id: string | null;
+  assignee_id: string | null;
+}
+
+/** Member biasa hanya melihat task divisinya sendiri atau yang ditugaskan padanya; peran lain melihat semua. */
+function canSeeTask(member: MemberRow, task: TaskScope): boolean {
+  if (member.role !== 'member') return true;
+  return task.assignee_id === member.user_id || (!!task.division_id && task.division_id === member.division_id);
+}
+
+/** '' -> null (dikosongkan), tidak ada -> undefined (tidak diubah). */
+function optionalField(value: FormDataEntryValue | null): string | null | undefined {
+  if (value === null) return undefined;
+  const text = String(value).trim();
+  return text === '' ? null : text;
 }
 
 /** Ambil anggota project + preferensi notifikasinya SEKALI saja (dipakai ulang untuk semua event). */
@@ -66,14 +89,15 @@ async function fetchProjectMembers(projectId: string): Promise<MemberRow[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from('project_members')
-    .select('user_id, notification_level, profile:profiles(id, full_name, email)')
+    .select('user_id, role, division_id, notification_level, profile:profiles(id, full_name, email)')
     .eq('project_id', projectId);
   return (data as unknown as MemberRow[]) ?? [];
 }
 
-function pickRecipients(members: MemberRow[], actorId: string, event: ActivityAction): Recipient[] {
+function pickRecipients(members: MemberRow[], actorId: string, event: ActivityAction, task?: TaskScope): Recipient[] {
   return members
     .filter((row) => row.user_id !== actorId)
+    .filter((row) => !task || canSeeTask(row, task))
     .filter((row) => isVisibleForLevel(row.notification_level, event))
     .map((row) => row.profile)
     .filter((p): p is Profile => Boolean(p))
@@ -127,9 +151,14 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
     assigneeId: formData.get('assigneeId') || undefined,
     priority: formData.get('priority') || 'medium',
     dueDate: formData.get('dueDate') || undefined,
+    startDate: formData.get('startDate') || undefined,
+    divisionId: formData.get('divisionId') || undefined,
   });
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  }
+  if (parsed.data.startDate && parsed.data.dueDate && parsed.data.startDate > parsed.data.dueDate) {
+    return { success: false, error: 'Tanggal mulai tidak boleh setelah deadline.' };
   }
 
   const supabase = createClient();
@@ -144,6 +173,21 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
     return { success: false, error: 'Kamu tidak dapat membuat task di project ini (Ketua hanya dapat melihat).' };
   }
 
+  // Member hanya boleh membuat task untuk divisinya sendiri (juga ditegakkan oleh database).
+  const { data: me } = await supabase
+    .from('project_members')
+    .select('role, division_id')
+    .eq('project_id', parsed.data.projectId)
+    .eq('user_id', user.id)
+    .single();
+  let divisionId = parsed.data.divisionId ?? null;
+  if (me?.role === 'member') {
+    if (!me.division_id) {
+      return { success: false, error: 'Kamu belum masuk divisi mana pun, jadi belum bisa membuat task. Minta Project Manager menempatkanmu di sebuah divisi.' };
+    }
+    divisionId = me.division_id;
+  }
+
   const { data: task, error } = await supabase
     .from('tasks')
     .insert({
@@ -153,6 +197,8 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
       assignee_id: parsed.data.assigneeId ?? null,
       priority: parsed.data.priority,
       due_date: parsed.data.dueDate ?? null,
+      start_date: parsed.data.startDate ?? null,
+      division_id: divisionId,
       created_by: user.id,
     })
     .select('*')
@@ -174,7 +220,7 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
 
   if (task.assignee_id) {
     const members = await fetchProjectMembers(parsed.data.projectId);
-    const recipients = pickRecipients(members, user.id, 'task_created').filter(
+    const recipients = pickRecipients(members, user.id, 'task_created', task).filter(
       (r) => r.id === task.assignee_id
     );
 
@@ -211,11 +257,13 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   const parsed = updateTaskSchema.safeParse({
     taskId: formData.get('taskId'),
     title: formData.get('title') || undefined,
-    description: formData.get('description') ?? undefined,
-    assigneeId: formData.get('assigneeId') ?? undefined,
+    description: optionalField(formData.get('description')),
+    assigneeId: optionalField(formData.get('assigneeId')),
     status: formData.get('status') || undefined,
     priority: formData.get('priority') || undefined,
-    dueDate: formData.get('dueDate') ?? undefined,
+    dueDate: optionalField(formData.get('dueDate')),
+    startDate: optionalField(formData.get('startDate')),
+    divisionId: optionalField(formData.get('divisionId')),
   });
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
@@ -248,9 +296,16 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   if (parsed.data.status !== undefined) updates.status = parsed.data.status;
   if (parsed.data.priority !== undefined) updates.priority = parsed.data.priority;
   if (parsed.data.dueDate !== undefined) updates.due_date = parsed.data.dueDate;
+  if (parsed.data.startDate !== undefined) updates.start_date = parsed.data.startDate;
+  if (parsed.data.divisionId !== undefined) updates.division_id = parsed.data.divisionId;
 
   if (Object.keys(updates).length === 0) {
     return { success: false, error: 'Tidak ada perubahan untuk disimpan.' };
+  }
+  const nextStart = (updates.start_date !== undefined ? updates.start_date : currentTask.start_date) as string | null;
+  const nextDue = (updates.due_date !== undefined ? updates.due_date : currentTask.due_date) as string | null;
+  if (nextStart && nextDue && nextStart > nextDue) {
+    return { success: false, error: 'Tanggal mulai tidak boleh setelah deadline.' };
   }
 
   const { data: updatedTask, error: updateError } = await supabase
@@ -263,6 +318,9 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   // §7: "Email tidak boleh dikirim sebelum database memastikan perubahan berhasil."
   // Jika update gagal, fungsi berhenti di sini — tidak ada activity log / email.
   if (updateError || !updatedTask) {
+    if (updateError?.code === 'PGRST116') {
+      return { success: false, error: 'Kamu tidak berhak mengubah task ini (Member hanya dapat mengubah task divisinya sendiri).' };
+    }
     return { success: false, error: updateError ? rpcErrorMessage(updateError, 'Gagal memperbarui task.') : 'Gagal memperbarui task.' };
   }
 
@@ -326,7 +384,7 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
     // Email untuk tiap perubahan dikirim bersamaan (bukan berurutan) agar respons lebih cepat.
     await Promise.all(
       changes.map(async (change) => {
-        const recipients = pickRecipients(members, user.id, change.action);
+        const recipients = pickRecipients(members, user.id, change.action, updatedTask);
 
         if (change.action === 'task_assignee_changed' && updatedTask.assignee_id) {
           const newAssignee = recipients.find((r) => r.id === updatedTask.assignee_id);

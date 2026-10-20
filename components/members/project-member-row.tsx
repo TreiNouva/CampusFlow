@@ -26,6 +26,7 @@ interface Props {
     role: ProjectRole;
     divisionId: string | null;
     divisionName: string | null;
+    isOrgKetua?: boolean;
   };
   divisions: { id: string; name: string }[];
   myRole: ProjectRole;
@@ -40,6 +41,8 @@ export function ProjectMemberRow({ projectId, member, divisions, myRole, myOrgRo
 
   // Ketua (viewer) tetap otomatis. PM hanya bisa diganti dengan menunjuk PM baru di anggota lain.
   const editable = canManage && member.role !== 'ketua' && member.role !== 'project_manager';
+  // Ketua organisasi boleh dijadikan Project Manager (jika mau atau perlu); PM lama otomatis kembali ke perannya
+  const canMakeKetuaPm = mayAssignLeadership && member.role === 'ketua';
   const canKick = canManage && member.role !== 'ketua' && member.role !== 'project_manager';
   const roleOptions = ASSIGNABLE_PROJECT_ROLES.filter(
     (r) => mayAssignLeadership || (r !== 'project_manager' && r !== 'wakil_project_manager')
@@ -63,6 +66,13 @@ export function ProjectMemberRow({ projectId, member, divisions, myRole, myOrgRo
     const fd = payload();
     fd.set('role', role);
     if (hasDivision && divisionId) fd.set('divisionId', divisionId);
+    void run(() => changeProjectMember(fd));
+  }
+
+  function handleMakePm() {
+    if (!window.confirm(`Jadikan ${member.name} (Ketua) sebagai Project Manager? Project Manager saat ini otomatis menjadi Member.`)) return;
+    const fd = payload();
+    fd.set('role', 'project_manager');
     void run(() => changeProjectMember(fd));
   }
 
@@ -127,6 +137,11 @@ export function ProjectMemberRow({ projectId, member, divisions, myRole, myOrgRo
           ) : (
             <ProjectRoleBadge role={member.role} divisionName={member.divisionName} />
           )}
+          {canMakeKetuaPm && (
+            <Button type="button" size="sm" variant="ghost" onClick={handleMakePm} disabled={busy}>
+              Jadikan Project Manager
+            </Button>
+          )}
           {canKick && (
             <Button type="button" size="sm" variant="danger" onClick={handleKick} disabled={busy}>
               Keluarkan
@@ -141,7 +156,10 @@ export function ProjectMemberRow({ projectId, member, divisions, myRole, myOrgRo
         </p>
       )}
       {member.role === 'project_manager' && canManage && (
-        <p className="mt-1 text-xs text-muted">Untuk mengganti Project Manager, tunjuk anggota lain sebagai Project Manager.</p>
+        <p className="mt-1 text-xs text-muted">
+          Untuk mengganti Project Manager, tunjuk anggota lain sebagai Project Manager
+          {member.isOrgKetua ? ' (Ketua otomatis kembali menjadi viewer).' : '.'}
+        </p>
       )}
       {(role === 'project_manager' || role === 'wakil_project_manager') && role !== member.role && (
         <p className="mt-1 text-xs text-muted">Peran ini hanya satu orang: pemegang sebelumnya otomatis menjadi Member.</p>

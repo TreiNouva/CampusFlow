@@ -8,6 +8,7 @@ interface ProjectAnnouncementEmailProps {
   body: string;
   projectUrl: string;
   isUpdate?: boolean;
+  scopeLabel?: string;
 }
 
 /** Dipakai untuk event: project_announcement — dikirim ke seluruh anggota project. */
@@ -19,13 +20,14 @@ export function projectAnnouncementEmail({
   body,
   projectUrl,
   isUpdate = false,
+  scopeLabel,
 }: ProjectAnnouncementEmailProps) {
-  const subject = `[${projectName}] ${isUpdate ? 'Pengumuman diperbarui' : 'Pengumuman'}: ${title}`;
+  const subject = `[${projectName}${scopeLabel ? ' · ' + scopeLabel : ''}] ${isUpdate ? 'Pengumuman diperbarui' : 'Pengumuman'}: ${title}`;
 
   const bodyHtml = `
     <p style="margin:0 0 12px;">Hai ${recipientName},</p>
     <p style="margin:0 0 12px;">
-      <strong>${actorName}</strong> ${isUpdate ? 'memperbarui pengumuman' : 'membagikan pengumuman baru'} di project <strong>${projectName}</strong>:
+      <strong>${actorName}</strong> ${isUpdate ? 'memperbarui pengumuman' : 'membagikan pengumuman baru'} di project <strong>${projectName}</strong>${scopeLabel ? ` (untuk <strong>${scopeLabel}</strong>)` : ''}:
     </p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
       style="margin:16px 0;background:#F5F8FB;border-radius:8px;">

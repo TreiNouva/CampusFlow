@@ -427,3 +427,14 @@ body {
     animation: none !important;
   }
 }
+
+/* Animasi ringan untuk grafik & bar progress (otomatis nonaktif jika user memilih "reduce motion") */
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.anim-grow-x { transform-origin: left center; animation: grow-x 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-grow-y { transform-origin: bottom center; animation: grow-y 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-rise { animation: rise-in 0.45s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-grow-x, .anim-grow-y, .anim-rise { animation: none; }
+}

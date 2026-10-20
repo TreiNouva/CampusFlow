@@ -11,14 +11,12 @@ import { NETWORK_ERROR_MESSAGE } from '@/lib/utils';
 
 interface Props {
   organizationId: string;
-  /** Anggota organisasi yang bisa ditunjuk sebagai Project Manager (Ketua tidak termasuk). */
+  /** Anggota organisasi yang bisa ditunjuk sebagai Project Manager (Ketua boleh). */
   candidates: { id: string; name: string }[];
   currentUserId: string;
-  /** Ketua tidak bisa menjadi Project Manager, jadi wajib menunjuk orang lain. */
-  currentUserIsKetua: boolean;
 }
 
-export function CreateProjectForm({ organizationId, candidates, currentUserId, currentUserIsKetua }: Props) {
+export function CreateProjectForm({ organizationId, candidates, currentUserId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
@@ -69,13 +67,7 @@ export function CreateProjectForm({ organizationId, candidates, currentUserId, c
           </div>
           <div>
             <Label htmlFor="projectManagerId">Project Manager</Label>
-            <Select
-              id="projectManagerId"
-              name="projectManagerId"
-              defaultValue={currentUserIsKetua ? '' : currentUserId}
-              required
-            >
-              {currentUserIsKetua && <option value="">Pilih Project Manager…</option>}
+            <Select id="projectManagerId" name="projectManagerId" defaultValue={currentUserId} required>
               {candidates.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -84,9 +76,7 @@ export function CreateProjectForm({ organizationId, candidates, currentUserId, c
               ))}
             </Select>
             <p className="mt-1 text-xs text-muted">
-              {currentUserIsKetua
-                ? 'Sebagai Ketua, kamu otomatis ikut sebagai viewer di semua project, jadi pilih anggota lain sebagai Project Manager.'
-                : 'Ketua organisasi otomatis ikut project ini sebagai viewer.'}
+              Ketua organisasi otomatis ikut project ini sebagai viewer, kecuali ia dipilih sebagai Project Manager.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -101,7 +91,7 @@ export function CreateProjectForm({ organizationId, candidates, currentUserId, c
           </div>
           {noCandidate && (
             <p className="rounded-lg bg-orange-light px-3 py-2 text-xs text-orange">
-              Belum ada anggota lain yang bisa menjadi Project Manager. Undang anggota dulu lewat &quot;Anggota &amp; Undangan&quot;.
+              Belum ada anggota yang bisa menjadi Project Manager.
             </p>
           )}
           {error && <p className="text-sm text-red-600">{error}</p>}

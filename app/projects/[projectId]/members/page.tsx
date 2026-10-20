@@ -1,9 +1,9 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { DivisionManager } from '@/components/projects/division-manager';
 import { AddProjectMemberForm } from '@/components/projects/add-project-member-form';
+import { ProjectNav } from '@/components/projects/project-nav';
 import { InviteManager } from '@/components/invites/invite-manager';
 import { ProjectMemberRow } from '@/components/members/project-member-row';
 import { requireUser } from '@/lib/auth/session';
@@ -34,7 +34,7 @@ export default async function ProjectMembersPage({ params }: { params: { project
         .from('project_members')
         .select('id, user_id, role, division_id, profile:profiles(id, full_name, email), division:project_divisions(name)')
         .eq('project_id', params.projectId),
-      supabase.from('project_divisions').select('id, name').eq('project_id', params.projectId).order('name'),
+      supabase.from('project_divisions').select('id, name, color').eq('project_id', params.projectId).order('name'),
       supabase
         .from('invites')
         .select('*')
@@ -53,6 +53,14 @@ export default async function ProjectMembersPage({ params }: { params: { project
     .eq('user_id', user.id)
     .maybeSingle();
 
+  const { data: ketuaRow } = await supabase
+    .from('organization_members')
+    .select('user_id')
+    .eq('organization_id', project.organization_id)
+    .eq('role', 'ketua')
+    .maybeSingle();
+  const ketuaId = ketuaRow?.user_id ?? null;
+
   const myRole = membership.role as ProjectRole;
   const myOrgRole = (orgMembership?.role as OrgRole | undefined) ?? null;
   const canManage = canManageProjectMembers(myRole, myOrgRole);
@@ -67,6 +75,7 @@ export default async function ProjectMembersPage({ params }: { params: { project
   const divisionList = (divisions ?? []).map((d: any) => ({
     id: d.id as string,
     name: d.name as string,
+    color: (d.color as string) ?? 'blue',
     memberCount: (members ?? []).filter((m: any) => m.division_id === d.id).length,
   }));
 
@@ -74,10 +83,8 @@ export default async function ProjectMembersPage({ params }: { params: { project
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <Link href={`/projects/${project.id}`} className="text-xs font-semibold uppercase tracking-wide text-teal">
-          ← {project.name}
-        </Link>
-        <h1 className="font-heading text-2xl font-bold text-ink">Anggota & Divisi</h1>
+        <ProjectNav projectId={project.id} projectName={project.name} active="members" myRole={myRole} />
+        <h1 className="mt-4 font-heading text-2xl font-bold text-ink">Anggota & Divisi</h1>
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
@@ -108,6 +115,7 @@ export default async function ProjectMembersPage({ params }: { params: { project
                       role: m.role,
                       divisionId: m.division_id ?? null,
                       divisionName: m.division?.name ?? null,
+                      isOrgKetua: m.user_id === ketuaId,
                     }}
                     divisions={(divisions ?? []) as { id: string; name: string }[]}
                     myRole={myRole}

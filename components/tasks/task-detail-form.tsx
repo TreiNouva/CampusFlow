@@ -8,14 +8,26 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Input, Label, Select } from '@/components/ui/input';
 import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { NETWORK_ERROR_MESSAGE } from '@/lib/utils';
-import type { Task } from '@/types/database';
+import type { ProjectRole, Task } from '@/types/database';
 
 interface Member {
   id: string;
   full_name: string;
+  role: ProjectRole;
+  division_id: string | null;
 }
 
-export function TaskDetailForm({ task, members }: { task: Task; members: Member[] }) {
+export function TaskDetailForm({
+  task, members, divisions, myRole,
+}: {
+  task: Task;
+  members: Member[];
+  divisions: { id: string; name: string }[];
+  myRole: ProjectRole;
+}) {
+  const isMember = myRole === 'member';
+  const [divisionId, setDivisionId] = useState(task.division_id ?? '');
+  const assignable = members.filter((m) => m.role !== 'member' || (!!divisionId && m.division_id === divisionId));
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -57,6 +69,7 @@ export function TaskDetailForm({ task, members }: { task: Task; members: Member[
             <Select id="status" name="status" defaultValue={task.status}>
               <option value="todo">To Do</option>
               <option value="in_progress">In Progress</option>
+              <option value="review">Review</option>
               <option value="done">Done</option>
               <option value="blocked">Blocked</option>
             </Select>
@@ -71,19 +84,39 @@ export function TaskDetailForm({ task, members }: { task: Task; members: Member[
             </Select>
           </div>
           <div>
+            <Label htmlFor="divisionId">Divisi</Label>
+            {isMember ? (
+              <Select id="divisionId" value={task.division_id ?? ''} disabled>
+                <option value="">Tanpa divisi</option>
+                {divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </Select>
+            ) : (
+              <Select id="divisionId" name="divisionId" value={divisionId} onChange={(e) => setDivisionId(e.target.value)}>
+                <option value="">Tanpa divisi (umum)</option>
+                {divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </Select>
+            )}
+          </div>
+          <div>
             <Label htmlFor="assigneeId">PIC</Label>
             <Select id="assigneeId" name="assigneeId" defaultValue={task.assignee_id ?? ''}>
               <option value="">Belum ditentukan</option>
-              {members.map((m) => (
+              {assignable.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.full_name}
                 </option>
               ))}
             </Select>
           </div>
-          <div>
-            <Label htmlFor="dueDate">Deadline</Label>
-            <Input id="dueDate" name="dueDate" type="date" defaultValue={task.due_date ?? ''} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="startDate">Mulai</Label>
+              <Input id="startDate" name="startDate" type="date" defaultValue={task.start_date ?? ''} />
+            </div>
+            <div>
+              <Label htmlFor="dueDate">Deadline</Label>
+              <Input id="dueDate" name="dueDate" type="date" defaultValue={task.due_date ?? ''} />
+            </div>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

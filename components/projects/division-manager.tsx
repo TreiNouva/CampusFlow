@@ -1,7 +1,8 @@
 'use client';
 
 import { FormEvent, useRef } from 'react';
-import { createDivision, deleteDivision } from '@/actions/division-actions';
+import { createDivision, deleteDivision, updateDivisionColor } from '@/actions/division-actions';
+import { DIVISION_PALETTE, divisionColor } from '@/lib/colors';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Input, Label } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import { useAction } from '@/lib/use-action';
 
 interface Props {
   projectId: string;
-  divisions: { id: string; name: string; memberCount: number }[];
+  divisions: { id: string; name: string; color: string; memberCount: number }[];
   /** Hanya Project Manager / Wakil PM yang boleh membuat & menghapus divisi. */
   canManage: boolean;
 }
@@ -23,6 +24,14 @@ export function DivisionManager({ projectId, divisions, canManage }: Props) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     void run(() => createDivision(formData), { onSuccess: () => formRef.current?.reset() });
+  }
+
+  function handleColor(id: string, color: string) {
+    const fd = new FormData();
+    fd.set('projectId', projectId);
+    fd.set('divisionId', id);
+    fd.set('color', color);
+    void run(() => updateDivisionColor(fd));
   }
 
   function handleDelete(id: string, name: string) {
@@ -54,6 +63,24 @@ export function DivisionManager({ projectId, divisions, canManage }: Props) {
                 key={d.id}
                 className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 py-1 pl-3 pr-2 text-sm"
               >
+                {canManage ? (
+                  <label className="relative flex cursor-pointer items-center" title="Ganti warna divisi">
+                    <span className="h-3.5 w-3.5 rounded-full ring-2 ring-white" style={{ backgroundColor: divisionColor(d.color).accent }} />
+                    <select
+                      aria-label={`Warna divisi ${d.name}`}
+                      value={d.color}
+                      onChange={(e) => handleColor(d.id, e.target.value)}
+                      disabled={busy}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    >
+                      {DIVISION_PALETTE.map((c) => (
+                        <option key={c.key} value={c.key}>{c.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: divisionColor(d.color).accent }} />
+                )}
                 <span className="font-medium text-ink">{d.name}</span>
                 <span className="text-xs text-muted">{d.memberCount} orang</span>
                 {canManage && (

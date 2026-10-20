@@ -14,6 +14,8 @@ const ACTION_LABEL: Record<string, string> = {
   member_added: 'menambahkan anggota',
   member_removed: 'mengeluarkan anggota',
   member_role_changed: 'mengubah peran anggota',
+  document_uploaded: 'mengunggah dokumen',
+  event_created: 'menjadwalkan acara',
 };
 
 export function ActivityFeed({ activity }: { activity: ActivityLog[] }) {

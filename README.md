@@ -40,6 +40,7 @@ campusflow/
 ├─ supabase/
 │  ├─ migrations/0001_init.sql   # Skema awal
 │  ├─ migrations/0002_roles_invites_announcements.sql  # Role baru, divisi, undangan, pengumuman + RLS
+│  ├─ migrations/0003_division_scope_calendar_budget_documents.sql  # Cakupan divisi, kalender, dokumen, budget
 │  └─ seed.sql                   # Data simulasi "BINUS Student Festival Committee"
 └─ middleware.ts            # Proteksi route + refresh session
 ```
@@ -264,3 +265,19 @@ perannya dipertahankan agar project tidak kehilangan manager; tunjuk PM baru aga
 ### 11.5 Pengumuman
 Disimpan di tabel `announcements` sehingga tampil untuk semua anggota project (termasuk pembuatnya), bisa diedit/dihapus
 oleh pembuat atau PM/Wakil PM, dan dikirim lewat email (tidak ke pembuatnya sendiri). Saat edit, email ulang hanya jika dicentang.
+
+## 12. Versi 6: Cakupan Divisi, Kalender, Dokumen, Budget (migrasi 0003)
+
+**Urutan deploy:** (1) jalankan `supabase/migrations/0003_division_scope_calendar_budget_documents.sql` di Supabase SQL Editor
+(New query, tempel seluruh isi, Run; sesudah 0001 & 0002; jangan dua kali), (2) baru push kode ke GitHub/Vercel.
+
+- **Ketua boleh jadi Project Manager**: saat membuat project, atau lewat tombol "Jadikan Project Manager" di Anggota & Divisi.
+  Bila PM baru ditunjuk, Ketua otomatis kembali menjadi viewer.
+- **Member hanya untuk divisinya**: buat/ubah task, lampiran, dan penugasan dibatasi di UI, server action, **dan database (RLS)**.
+  Member melihat task, jadwal, pengumuman, dokumen divisinya + Global. Ketua, PM, Wakil PM, Sekretaris melihat semua; PIC/Koordinator/Bendahara: Global + divisinya.
+  PIC/Koordinator membuat pengumuman/acara hanya untuk divisinya; Global oleh PM/Wakil PM/Sekretaris.
+- **Kalender project** (Ringkasan): tampilan minggu & bulan, mini kalender, filter per divisi, warna tiap divisi (diatur PM di Anggota & Divisi), acara, milestone, kehadiran + check-in.
+- **Dokumen**: unggah langsung ke Supabase Storage (bucket privat `project-documents` dibuat otomatis oleh server, perlu `SUPABASE_SERVICE_ROLE_KEY` di Vercel). Lampiran task + halaman Dokumen. Maks 10 MB.
+- **Budget** (Ketua, PM, Wakil PM, Bendahara melihat; PM/Wakil PM/Bendahara mengubah): rencana vs realisasi + transaksi.
+- **Reset password masih ke localhost?** Itu pengaturan Supabase, bukan Vercel: Authentication → URL Configuration → *Site URL* = domain Vercel kamu,
+  dan *Redirect URLs* tambahkan `https://DOMAIN-KAMU/auth/callback` (lihat §10.1). Lalu minta link reset yang BARU.

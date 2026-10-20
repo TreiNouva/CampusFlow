@@ -1,160 +1,119 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 import { createTask } from '@/actions/task-actions';
 import { Button } from '@/components/ui/button';
 import { Input, Label, Select, Textarea } from '@/components/ui/input';
 import { LoadingOverlay } from '@/components/ui/loading-overlay';
-import { NETWORK_ERROR_MESSAGE } from '@/lib/utils';
+import { Modal } from '@/components/ui/modal';
+import { useAction } from '@/lib/use-action';
+import type { ProjectRole } from '@/types/database';
 
-interface Member {
-  id: string;
-  full_name: string;
-}
+interface Member { id: string; full_name: string; role: ProjectRole; division_id: string | null }
 
 /**
- * Form task baru ditampilkan sebagai MODAL (bukan popover absolut lagi) sehingga
- * tidak bisa terpotong layar/navbar: panel punya tinggi maksimum dan bisa di-scroll
- * sendiri di layar kecil / HP.
+ * Form task baru (modal). Member hanya bisa membuat task untuk divisinya sendiri (dipaksa di form, server, dan database),
+ * dan hanya bisa menugaskan sesama anggota divisi yang sama.
  */
-export function CreateTaskForm({ projectId, members }: { projectId: string; members: Member[] }) {
+export function CreateTaskForm({
+  projectId, members, divisions, myRole, myDivisionId, defaultStart,
+}: {
+  projectId: string;
+  members: Member[];
+  divisions: { id: string; name: string }[];
+  myRole: ProjectRole;
+  myDivisionId: string | null;
+  defaultStart: string;
+}) {
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [, startTransition] = useTransition();
-  const formRef = useRef<HTMLFormElement>(null);
-  const router = useRouter();
+  const { error, setError, busy, run } = useAction();
+  const isMember = myRole === 'member';
+  const [divisionId, setDivisionId] = useState<string>(isMember ? myDivisionId ?? '' : '');
 
-  // Tutup modal dengan tombol Esc & kunci scroll halaman di belakang saat modal terbuka.
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) setOpen(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open, busy]);
+  // Member biasa harus satu divisi dengan task; selain itu bebas
+  const assignable = members.filter((m) => m.role !== 'member' || (!!divisionId && m.division_id === divisionId));
 
   function close() {
     if (busy) return;
     setError(null);
     setOpen(false);
   }
+  function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    void run(() => createTask(fd), { onSuccess: () => setOpen(false) });
+  }
 
-  function handleSubmit(formData: FormData) {
-    setError(null);
-    setBusy(true);
-    startTransition(async () => {
-      try {
-        const result = await createTask(formData);
-        if (!result.success) {
-          setError(result.error ?? 'Gagal membuat task.');
-          return;
-        }
-        formRef.current?.reset();
-        setOpen(false);
-        router.refresh();
-      } catch {
-        setError(NETWORK_ERROR_MESSAGE);
-      } finally {
-        setBusy(false);
-      }
-    });
+  if (isMember && !myDivisionId) {
+    return <span className="rounded-lg bg-orange-light px-3 py-1.5 text-xs text-orange">Kamu belum masuk divisi, jadi belum bisa membuat task.</span>;
   }
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} size="sm">
-        + Task Baru
-      </Button>
-
+      <Button onClick={() => setOpen(true)} size="sm">+ Task Baru</Button>
       {open && (
-        <div
-          className="fixed inset-0 z-50 overflow-y-auto bg-navy/30 p-4 backdrop-blur-[2px] animate-fade-in"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) close();
-          }}
-        >
-          <div className="flex min-h-full items-center justify-center">
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="create-task-title"
-              className="w-full max-w-md rounded-card bg-white p-5 shadow-xl"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h2 id="create-task-title" className="font-heading text-lg font-bold text-ink">
-                  Task Baru
-                </h2>
-                <button
-                  type="button"
-                  onClick={close}
-                  className="rounded-md px-2 py-1 text-sm text-muted hover:bg-gray-100"
-                  aria-label="Tutup"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <form ref={formRef} action={handleSubmit} className="space-y-3">
-                <input type="hidden" name="projectId" value={projectId} />
-                <div>
-                  <Label htmlFor="title">Judul Task</Label>
-                  <Input id="title" name="title" placeholder="mis. Booking Venue" required autoFocus />
-                </div>
-                <div>
-                  <Label htmlFor="description">Deskripsi</Label>
-                  <Textarea id="description" name="description" rows={3} />
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="assigneeId">PIC</Label>
-                    <Select id="assigneeId" name="assigneeId" defaultValue="">
-                      <option value="">Belum ditentukan</option>
-                      {members.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.full_name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="priority">Priority</Label>
-                    <Select id="priority" name="priority" defaultValue="medium">
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="urgent">Urgent</option>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="dueDate">Deadline</Label>
-                  <Input id="dueDate" name="dueDate" type="date" />
-                </div>
-
-                {error && <p className="text-sm text-red-600">{error}</p>}
-
-                <div className="flex gap-2 pt-1">
-                  <Button type="submit" className="flex-1" disabled={busy}>
-                    {busy ? 'Menyimpan...' : 'Simpan'}
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={close} disabled={busy}>
-                    Batal
-                  </Button>
-                </div>
-              </form>
+        <Modal title="Task Baru" onClose={close} busy={busy}>
+          <form onSubmit={submit} className="space-y-3">
+            <input type="hidden" name="projectId" value={projectId} />
+            <div>
+              <Label htmlFor="title">Judul Task</Label>
+              <Input id="title" name="title" placeholder="mis. Booking Venue" required autoFocus />
             </div>
-          </div>
-        </div>
+            <div>
+              <Label htmlFor="description">Deskripsi</Label>
+              <Textarea id="description" name="description" rows={3} />
+            </div>
+            <div>
+              <Label htmlFor="divisionId">Divisi</Label>
+              {isMember ? (
+                <>
+                  <Select id="divisionId" value={myDivisionId ?? ''} disabled>
+                    {divisions.filter((d) => d.id === myDivisionId).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </Select>
+                  <p className="mt-1 text-[11px] text-muted">Member hanya dapat membuat task untuk divisinya sendiri.</p>
+                </>
+              ) : (
+                <Select id="divisionId" name="divisionId" value={divisionId} onChange={(e) => setDivisionId(e.target.value)}>
+                  <option value="">Tanpa divisi (umum)</option>
+                  {divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </Select>
+              )}
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="assigneeId">PIC</Label>
+                <Select id="assigneeId" name="assigneeId" defaultValue="">
+                  <option value="">Belum ditentukan</option>
+                  {assignable.map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="priority">Priority</Label>
+                <Select id="priority" name="priority" defaultValue="medium">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="startDate">Mulai</Label>
+                <Input id="startDate" name="startDate" type="date" defaultValue={defaultStart} />
+              </div>
+              <div>
+                <Label htmlFor="dueDate">Deadline</Label>
+                <Input id="dueDate" name="dueDate" type="date" />
+              </div>
+            </div>
+            <p className="text-[11px] text-muted">Tanggal mulai & deadline dipakai untuk menampilkan task di kalender project.</p>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <div className="flex gap-2 pt-1">
+              <Button type="submit" className="flex-1" disabled={busy}>{busy ? 'Menyimpan...' : 'Simpan'}</Button>
+              <Button type="button" variant="ghost" onClick={close} disabled={busy}>Batal</Button>
+            </div>
+          </form>
+        </Modal>
       )}
-
       {busy && <LoadingOverlay label="Menyimpan task..." />}
     </>
   );

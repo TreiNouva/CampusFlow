@@ -12,7 +12,7 @@ import type { Profile } from '@/types/database';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
 const POST_DENIED =
-  'Hanya Project Manager, Wakil PM, PIC, Koordinator, atau Sekretaris yang dapat membuat pengumuman.';
+  'Kamu tidak berhak membuat pengumuman untuk cakupan ini. PIC/Koordinator hanya dapat membuat pengumuman untuk divisinya sendiri; Global oleh PM, Wakil PM, atau Sekretaris.';
 
 /**
  * Kirim email pengumuman ke anggota project: kecuali pembuat aksi (tidak dikirimi email atas
@@ -26,23 +26,35 @@ async function emailAnnouncement(params: {
   title: string;
   body: string;
   isUpdate: boolean;
+  divisionId: string | null;
 }) {
-  const { projectId, actorId, title, body, isUpdate } = params;
+  const { projectId, actorId, title, body, isUpdate, divisionId } = params;
   const supabase = createClient();
   const admin = createAdminClient();
 
-  const [{ data: project }, { data: actorProfile }, { data: members }] = await Promise.all([
+  const [{ data: project }, { data: actorProfile }, { data: members }, { data: division }] = await Promise.all([
     supabase.from('projects').select('name').eq('id', projectId).single(),
     supabase.from('profiles').select('full_name').eq('id', actorId).single(),
     admin
       .from('project_members')
-      .select('user_id, notification_level, profile:profiles(id, full_name, email)')
+      .select('user_id, role, division_id, notification_level, profile:profiles(id, full_name, email)')
       .eq('project_id', projectId),
+    divisionId
+      ? admin.from('project_divisions').select('name').eq('id', divisionId).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const recipients = (members ?? [])
     .filter((row: any) => row.user_id !== actorId)
     .filter((row: any) => row.notification_level !== 'off')
+    // Global: semua anggota. Divisi: anggota divisi itu + Project Manager + Wakil PM.
+    .filter(
+      (row: any) =>
+        !divisionId ||
+        row.division_id === divisionId ||
+        row.role === 'project_manager' ||
+        row.role === 'wakil_project_manager'
+    )
     .map((row: any) => row.profile as Profile | null)
     .filter((p): p is Profile => Boolean(p));
 
@@ -56,6 +68,7 @@ async function emailAnnouncement(params: {
         body,
         projectUrl: `${APP_URL}/projects/${projectId}`,
         isUpdate,
+        scopeLabel: division ? `Divisi ${division.name}` : undefined,
       });
       const result = await sendEmail({ to: recipient.email, subject, html });
 
@@ -78,8 +91,10 @@ export async function createAnnouncement(formData: FormData): Promise<ActionResu
     projectId: formData.get('projectId'),
     title: formData.get('title'),
     body: formData.get('body'),
+    divisionId: formData.get('divisionId') || null,
   });
   if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  const divisionId = parsed.data.divisionId ?? null;
 
   const { data: announcement, error } = await createClient()
     .from('announcements')
@@ -88,6 +103,7 @@ export async function createAnnouncement(formData: FormData): Promise<ActionResu
       author_id: user.id,
       title: parsed.data.title,
       body: parsed.data.body,
+      division_id: divisionId,
     })
     .select('id')
     .single();
@@ -112,6 +128,7 @@ export async function createAnnouncement(formData: FormData): Promise<ActionResu
     title: parsed.data.title,
     body: parsed.data.body,
     isUpdate: false,
+    divisionId,
   });
 
   revalidatePath(`/projects/${parsed.data.projectId}`);
@@ -135,7 +152,7 @@ export async function updateAnnouncement(formData: FormData): Promise<ActionResu
     .update({ title: parsed.data.title, body: parsed.data.body })
     .eq('id', parsed.data.announcementId)
     .eq('project_id', parsed.data.projectId)
-    .select('id');
+    .select('id, division_id');
 
   if (error) {
     console.error('[updateAnnouncement]', error.code, error.message);
@@ -155,6 +172,7 @@ export async function updateAnnouncement(formData: FormData): Promise<ActionResu
 
   if (parsed.data.resend) {
     await emailAnnouncement({
+      divisionId: data[0].division_id ?? null,
       projectId: parsed.data.projectId,
       actorId: user.id,
       title: parsed.data.title,

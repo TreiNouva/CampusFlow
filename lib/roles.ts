@@ -120,3 +120,34 @@ export const PROJECT_ROLE_COLOR: Record<ProjectRole, string> = {
   sekretaris: 'bg-purple-100 text-purple-700',
   member: 'bg-gray-100 text-gray-700',
 };
+
+// ---------------------------------------------------------------- Cakupan divisi (v6)
+export const isPlainMemberRole = (role: ProjectRole | null | undefined) => role === 'member';
+
+/** Melihat SEMUA pengumuman/jadwal/dokumen (Global + semua divisi). Peran lain: Global + divisinya. */
+export const seesAllScopedItems = (role: ProjectRole | null | undefined) =>
+  role === 'ketua' || role === 'project_manager' || role === 'wakil_project_manager' || role === 'sekretaris';
+
+/** Boleh membuat pengumuman/jadwal untuk divisi `divisionId` (null = Global). */
+export function canManageScoped(role: ProjectRole | null | undefined, myDivisionId: string | null, divisionId: string | null) {
+  if (role === 'project_manager' || role === 'wakil_project_manager' || role === 'sekretaris') return true;
+  if (role === 'pic' || role === 'koordinator') return divisionId !== null && divisionId === myDivisionId;
+  return false;
+}
+
+export const canManageAnyScope = (role: ProjectRole | null | undefined, myDivisionId: string | null) =>
+  role === 'project_manager' || role === 'wakil_project_manager' || role === 'sekretaris' ||
+  ((role === 'pic' || role === 'koordinator') && !!myDivisionId);
+
+export const canViewBudgetRole = (role: ProjectRole | null | undefined) =>
+  role === 'ketua' || role === 'project_manager' || role === 'wakil_project_manager' || role === 'bendahara';
+
+export const canManageBudgetRole = (role: ProjectRole | null | undefined) =>
+  role === 'project_manager' || role === 'wakil_project_manager' || role === 'bendahara';
+
+/** Boleh mengunggah dokumen umum (non-task). Member hanya ke divisinya sendiri. */
+export const canUploadProjectDocument = (role: ProjectRole | null | undefined, myDivisionId: string | null, divisionId: string | null) => {
+  if (!role || role === 'ketua') return false;
+  if (role === 'member') return divisionId !== null && divisionId === myDivisionId;
+  return true;
+};

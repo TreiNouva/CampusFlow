@@ -48,9 +48,8 @@ export default async function OrganizationOverviewPage({
 
   const myRole = membership.role as OrgRole;
   const joinedIds = new Set((myProjects ?? []).map((p: any) => p.project_id));
-  // Kandidat Project Manager: anggota organisasi selain Ketua (Ketua otomatis menjadi viewer)
+  // Kandidat Project Manager: semua anggota organisasi (Ketua boleh menjadi PM jika mau atau perlu)
   const candidates = (members ?? [])
-    .filter((m: any) => m.role !== 'ketua')
     .map((m: any) => ({ id: m.user_id as string, name: (m.profile?.full_name as string) || 'Tanpa nama' }));
 
   return (
@@ -135,7 +134,6 @@ export default async function OrganizationOverviewPage({
               organizationId={organization.id}
               candidates={candidates}
               currentUserId={user.id}
-              currentUserIsKetua={myRole === 'ketua'}
             />
           </div>
         </section>

@@ -5,7 +5,8 @@ import { NotificationPreferenceForm } from '@/components/projects/notification-p
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/utils';
-import type { NotificationLevel, NotificationLog } from '@/types/database';
+import { ProjectNav } from '@/components/projects/project-nav';
+import type { NotificationLevel, NotificationLog, ProjectRole } from '@/types/database';
 
 const LOG_STATUS_COLOR: Record<string, string> = {
   sent: 'bg-green-100 text-green-700',
@@ -47,8 +48,8 @@ export default async function NotificationSettingsPage({
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="mx-auto max-w-3xl px-6 py-8">
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal">{project.name}</p>
-        <h1 className="font-heading text-2xl font-bold text-ink">Notification Settings</h1>
+        <ProjectNav projectId={params.projectId} projectName={project.name} active="notifications" myRole={membership.role as ProjectRole} />
+        <h1 className="mt-4 font-heading text-2xl font-bold text-ink">Notification Settings</h1>
         <p className="mt-1 text-sm text-muted">
           Atur email apa saja yang ingin kamu terima dari project ini.
         </p>

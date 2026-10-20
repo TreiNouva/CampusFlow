@@ -1,88 +1,67 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Navbar } from '@/components/layout/navbar';
 import { CreateTaskForm } from '@/components/tasks/create-task-form';
-import { TaskCard } from '@/components/tasks/task-card';
+import { TaskBoard, type BoardTask } from '@/components/tasks/task-board';
+import { ProjectNav } from '@/components/projects/project-nav';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import { STATUS_LABEL } from '@/lib/utils';
-import { canWriteProjectRole } from '@/lib/roles';
-import type { ProjectRole, TaskStatus } from '@/types/database';
-
-const COLUMNS: TaskStatus[] = ['todo', 'in_progress', 'done', 'blocked'];
+import { todayJakarta } from '@/lib/dates';
+import type { ProjectRole } from '@/types/database';
 
 export default async function TaskBoardPage({ params }: { params: { projectId: string } }) {
   const user = await requireUser();
   const supabase = createClient();
+  const today = todayJakarta();
 
-  const [{ data: project }, { data: membership }, { data: tasks }, { data: members }] =
+  const [{ data: project }, { data: membership }, { data: tasks }, { data: members }, { data: divisions }, { data: docs }] =
     await Promise.all([
       supabase.from('projects').select('id, name').eq('id', params.projectId).single(),
-      supabase
-        .from('project_members')
-        .select('role')
-        .eq('project_id', params.projectId)
-        .eq('user_id', user.id)
-        .maybeSingle(),
+      supabase.from('project_members').select('role, division_id').eq('project_id', params.projectId).eq('user_id', user.id).maybeSingle(),
       supabase
         .from('tasks')
-        .select('*, assignee:profiles!tasks_assignee_id_fkey(id, full_name)')
+        .select('id, title, status, priority, due_date, start_date, division_id, assignee_id, assignee:profiles!tasks_assignee_id_fkey(id, full_name)')
         .eq('project_id', params.projectId)
         .order('due_date', { ascending: true, nullsFirst: false }),
-      supabase
-        .from('project_members')
-        .select('user_id, role, profile:profiles(id, full_name)')
-        .eq('project_id', params.projectId),
+      supabase.from('project_members').select('user_id, role, division_id, profile:profiles(id, full_name)').eq('project_id', params.projectId),
+      supabase.from('project_divisions').select('id, name, color').eq('project_id', params.projectId).order('created_at'),
+      supabase.from('documents').select('task_id').eq('project_id', params.projectId).not('task_id', 'is', null),
     ]);
   if (!project || !membership) notFound();
 
+  const myRole = membership.role as ProjectRole;
+  const myDivisionId = (membership.division_id as string | null) ?? null;
+
+  const attachments = new Map<string, number>();
+  for (const d of (docs ?? []) as any[]) attachments.set(d.task_id, (attachments.get(d.task_id) ?? 0) + 1);
+
+  const boardTasks: BoardTask[] = ((tasks ?? []) as any[]).map((t) => ({
+    id: t.id, title: t.title, status: t.status, priority: t.priority, due_date: t.due_date, start_date: t.start_date,
+    division_id: t.division_id, assignee_id: t.assignee_id, assigneeName: t.assignee?.full_name ?? null, attachments: attachments.get(t.id) ?? 0,
+  }));
+
   // Ketua hanya viewer: tidak bisa ditugaskan task
-  const assignableMembers = (members ?? [])
-    .filter((m: any) => m.role !== 'ketua')
-    .map((m: any) => m.profile)
-    .filter(Boolean);
-  const canWrite = canWriteProjectRole(membership.role as ProjectRole);
+  const assignable = ((members ?? []) as any[])
+    .filter((m) => m.role !== 'ketua' && m.profile)
+    .map((m) => ({ id: m.profile.id as string, full_name: m.profile.full_name as string, role: m.role as ProjectRole, division_id: (m.division_id as string | null) ?? null }));
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="flex items-center justify-between">
+        <ProjectNav projectId={project.id} projectName={project.name} active="tasks" myRole={myRole} />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Link href={`/projects/${project.id}`} className="text-xs font-semibold uppercase tracking-wide text-teal">
-              ← Kembali ke {project.name}
-            </Link>
             <h1 className="font-heading text-2xl font-bold text-ink">Task Board</h1>
+            {myRole === 'member' && <p className="text-xs text-muted">Kamu melihat task divisimu dan task yang ditugaskan kepadamu.</p>}
           </div>
-          {canWrite ? (
-            <CreateTaskForm projectId={project.id} members={assignableMembers} />
-          ) : (
+          {myRole === 'ketua' ? (
             <span className="rounded-lg bg-sky/40 px-3 py-1.5 text-xs text-navy">Mode lihat (Ketua)</span>
+          ) : (
+            <CreateTaskForm projectId={project.id} members={assignable} divisions={(divisions ?? []) as any[]} myRole={myRole} myDivisionId={myDivisionId} defaultStart={today} />
           )}
         </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-          {COLUMNS.map((status) => {
-            const columnTasks = (tasks ?? []).filter((t: any) => t.status === status);
-            return (
-              <div key={status} className="rounded-card bg-white/60 p-3">
-                <h2 className="mb-3 flex items-center justify-between text-xs font-bold uppercase tracking-wide text-muted">
-                  {STATUS_LABEL[status]}
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px]">{columnTasks.length}</span>
-                </h2>
-                <div className="space-y-3">
-                  {columnTasks.map((task: any) => (
-                    <TaskCard key={task.id} task={task} projectId={project.id} />
-                  ))}
-                  {columnTasks.length === 0 && (
-                    <p className="rounded-lg border border-dashed border-gray-200 px-3 py-6 text-center text-xs text-muted">
-                      Kosong
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        <div className="mt-4">
+          <TaskBoard projectId={project.id} tasks={boardTasks} divisions={(divisions ?? []) as any[]} myRole={myRole} myUserId={user.id} myDivisionId={myDivisionId} today={today} />
         </div>
       </main>
     </div>
