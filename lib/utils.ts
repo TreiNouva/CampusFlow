@@ -35,11 +35,11 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
 };
 
 export const STATUS_COLOR: Record<TaskStatus, string> = {
-  todo: 'bg-gray-100 text-gray-700',
+  todo: 'bg-gray-100 text-gray-600',
   in_progress: 'bg-sky text-navy',
-  review: 'bg-purple-100 text-purple-700',
-  done: 'bg-green-100 text-green-700',
-  blocked: 'bg-red-100 text-red-700',
+  review: 'bg-slate-200 text-slate-700',
+  done: 'bg-emerald-50 text-emerald-700',
+  blocked: 'bg-red-50 text-red-700',
 };
 
 export const PRIORITY_LABEL: Record<TaskPriority, string> = {
@@ -50,10 +50,10 @@ export const PRIORITY_LABEL: Record<TaskPriority, string> = {
 };
 
 export const PRIORITY_COLOR: Record<TaskPriority, string> = {
-  low: 'bg-gray-100 text-gray-600',
-  medium: 'bg-sky text-navy',
+  low: 'bg-gray-100 text-gray-500',
+  medium: 'bg-gray-100 text-gray-700',
   high: 'bg-orange-light text-orange',
-  urgent: 'bg-red-100 text-red-700',
+  urgent: 'bg-red-50 text-red-700',
 };
 
 export function initials(name: string): string {

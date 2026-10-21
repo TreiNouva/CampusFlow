@@ -1,11 +1,9 @@
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui/card';
 import { NotificationPreferenceForm } from '@/components/projects/notification-preference-form';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/utils';
-import { ProjectNav } from '@/components/projects/project-nav';
 import type { NotificationLevel, NotificationLog, ProjectRole } from '@/types/database';
 
 const LOG_STATUS_COLOR: Record<string, string> = {
@@ -45,11 +43,9 @@ export default async function NotificationSettingsPage({
   const logs = (logRows ?? []) as NotificationLog[];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-6 py-8">
-        <ProjectNav projectId={params.projectId} projectName={project.name} active="notifications" myRole={membership.role as ProjectRole} />
-        <h1 className="mt-4 font-heading text-2xl font-bold text-ink">Notification Settings</h1>
+    <div>
+      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="font-heading text-xl font-bold text-ink sm:text-2xl">Notification Settings</h1>
         <p className="mt-1 text-sm text-muted">
           Atur email apa saja yang ingin kamu terima dari project ini.
         </p>

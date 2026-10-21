@@ -1,9 +1,7 @@
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { DivisionManager } from '@/components/projects/division-manager';
 import { AddProjectMemberForm } from '@/components/projects/add-project-member-form';
-import { ProjectNav } from '@/components/projects/project-nav';
 import { InviteManager } from '@/components/invites/invite-manager';
 import { ProjectMemberRow } from '@/components/members/project-member-row';
 import { requireUser } from '@/lib/auth/session';
@@ -80,11 +78,9 @@ export default async function ProjectMembersPage({ params }: { params: { project
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <ProjectNav projectId={project.id} projectName={project.name} active="members" myRole={myRole} />
-        <h1 className="mt-4 font-heading text-2xl font-bold text-ink">Anggota & Divisi</h1>
+    <div>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="font-heading text-xl font-bold text-ink sm:text-2xl">Anggota & Divisi</h1>
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">

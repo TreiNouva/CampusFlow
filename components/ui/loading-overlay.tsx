@@ -22,7 +22,7 @@ export function LoadingOverlay({ label = 'Memuat...', delayed = false }: Loading
     >
       <div className="flex items-center gap-3 rounded-card bg-white px-5 py-3 shadow-lg">
         <span
-          className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-orange"
+          className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-navy"
           aria-hidden="true"
         />
         <span className="text-sm font-medium text-ink">{label}</span>

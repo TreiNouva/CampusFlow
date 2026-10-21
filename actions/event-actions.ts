@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/auth/session';
 import { rpcErrorMessage } from '@/lib/rpc';
 import { jakartaToIso } from '@/lib/dates';
+import { checkProjectPeriod } from '@/lib/project-period';
 import { attendanceSchema, eventSchema, updateEventSchema } from '@/lib/validations/schemas';
 import type { ActionResult } from './organization-actions';
 
@@ -41,6 +42,11 @@ export async function createEvent(formData: FormData): Promise<ActionResult> {
   if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
   const times = buildTimes(parsed.data);
   if (times.end_at < times.start_at) return { success: false, error: 'Waktu selesai tidak boleh sebelum waktu mulai.' };
+  const periodError = await checkProjectPeriod(String(parsed.data.projectId), [
+    [parsed.data.startDate, 'Acara'],
+    [parsed.data.endDate, 'Acara'],
+  ]);
+  if (periodError) return { success: false, error: periodError };
 
   const { data, error } = await createClient()
     .from('project_events')
@@ -58,14 +64,13 @@ export async function createEvent(formData: FormData): Promise<ActionResult> {
     .single();
   if (error || !data) {
     if (error?.code === '42501') return { success: false, error: 'Kamu tidak berhak membuat acara untuk cakupan ini (PIC/Koordinator hanya untuk divisinya sendiri).' };
-    console.error('[createEvent]', error?.code, error?.message);
-    return { success: false, error: 'Gagal menyimpan acara.' };
+    return { success: false, error: error ? rpcErrorMessage(error, 'Gagal menyimpan acara.') : 'Gagal menyimpan acara.' };
   }
   await createAdminClient().from('activity_logs').insert({
     project_id: parsed.data.projectId, actor_id: user.id, action_type: 'event_created', new_value: parsed.data.title,
     metadata: { event_id: data.id, division_id: parsed.data.divisionId ?? null },
   });
-  revalidatePath(`/projects/${parsed.data.projectId}`);
+  revalidatePath(`/projects/${parsed.data.projectId}`, 'layout');
   return { success: true };
 }
 
@@ -75,6 +80,11 @@ export async function updateEvent(formData: FormData): Promise<ActionResult> {
   if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
   const times = buildTimes(parsed.data);
   if (times.end_at < times.start_at) return { success: false, error: 'Waktu selesai tidak boleh sebelum waktu mulai.' };
+  const periodError = await checkProjectPeriod(String(parsed.data.projectId), [
+    [parsed.data.startDate, 'Acara'],
+    [parsed.data.endDate, 'Acara'],
+  ]);
+  if (periodError) return { success: false, error: periodError };
 
   const { data, error } = await createClient()
     .from('project_events')
@@ -89,10 +99,11 @@ export async function updateEvent(formData: FormData): Promise<ActionResult> {
     .eq('id', parsed.data.eventId)
     .eq('project_id', parsed.data.projectId)
     .select('id');
-  if (error || !data || data.length === 0) {
+  if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menyimpan acara.') };
+  if (!data || data.length === 0) {
     return { success: false, error: 'Acara tidak ditemukan atau kamu tidak berhak mengubahnya.' };
   }
-  revalidatePath(`/projects/${parsed.data.projectId}`);
+  revalidatePath(`/projects/${parsed.data.projectId}`, 'layout');
   return { success: true };
 }
 
@@ -103,7 +114,7 @@ export async function deleteEvent(formData: FormData): Promise<ActionResult> {
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || !/^[0-9a-f-]{36}$/i.test(projectId)) return { success: false, error: 'Acara tidak valid.' };
   const { data, error } = await createClient().from('project_events').delete().eq('id', eventId).eq('project_id', projectId).select('id');
   if (error || !data || data.length === 0) return { success: false, error: 'Acara tidak ditemukan atau kamu tidak berhak menghapusnya.' };
-  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}`, 'layout');
   return { success: true };
 }
 
@@ -119,7 +130,7 @@ export async function setAttendance(formData: FormData): Promise<ActionResult> {
     p_event: parsed.data.eventId, p_user: parsed.data.userId, p_status: parsed.data.status,
   });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menyimpan kehadiran.') };
-  revalidatePath(`/projects/${parsed.data.projectId}`);
+  revalidatePath(`/projects/${parsed.data.projectId}`, 'layout');
   return { success: true };
 }
 
@@ -131,6 +142,6 @@ export async function checkInEvent(formData: FormData): Promise<ActionResult> {
   if (!/^[0-9a-f-]{36}$/i.test(eventId)) return { success: false, error: 'Acara tidak valid.' };
   const { error } = await createClient().rpc('check_in_event', { p_event: eventId });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal check-in.') };
-  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}`, 'layout');
   return { success: true };
 }

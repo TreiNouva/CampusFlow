@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody, Badge } from '@/components/ui/card';
+import { PageHeader } from '@/components/layout/page-header';
 import { CreateOrganizationForm } from '@/components/dashboard/create-organization-form';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
@@ -32,28 +32,23 @@ export default async function DashboardPage() {
     .filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex items-center justify-between">
-          <h1 className="font-heading text-2xl font-bold text-ink">Dashboard</h1>
-          <Link
-            href="#create-organization"
-            className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark"
-          >
-            + Organisasi Baru
-          </Link>
-        </div>
+    <div>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        <PageHeader
+          title="Beranda"
+          description="Organisasimu dan task yang perlu segera dikerjakan."
+          actions={<Link href="#create-organization" className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark">+ Organisasi baru</Link>}
+        />
 
-        <section className="mt-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Organisasi Kamu</h2>
+        <section>
+          <h2 className="mb-3 text-sm font-semibold text-ink">Organisasi kamu</h2>
           {organizations.length === 0 ? (
             <EmptyOrganizations />
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {organizations.map((org: any) => (
                 <Link key={org.id} href={`/organizations/${org.id}`}>
-                  <Card className="h-full transition hover:border-navy">
+                  <Card className="h-full transition hover:border-gray-300">
                     <CardBody>
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-heading text-base font-bold text-ink">{org.name}</h3>
@@ -69,13 +64,13 @@ export default async function DashboardPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-            Task Kamu yang Mendekati Deadline
+          <h2 className="mb-3 text-sm font-semibold text-ink">
+            Task kamu yang mendekati deadline
           </h2>
           <Card>
             {(!myTasks || myTasks.length === 0) && (
               <CardBody>
-                <p className="text-sm text-muted">Tidak ada task aktif yang ditugaskan ke kamu. 🎉</p>
+                <p className="text-sm text-muted">Tidak ada task aktif yang ditugaskan ke kamu.</p>
               </CardBody>
             )}
             <ul className="divide-y divide-gray-100">

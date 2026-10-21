@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/auth/session';
 import { canWriteProject } from '@/lib/permissions';
 import { rpcErrorMessage } from '@/lib/rpc';
+import { checkProjectPeriod } from '@/lib/project-period';
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations/schemas';
 import { sendEmail } from '@/lib/email/send';
 import { taskAssignedEmail } from '@/emails/task-assigned';
@@ -160,6 +161,11 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
   if (parsed.data.startDate && parsed.data.dueDate && parsed.data.startDate > parsed.data.dueDate) {
     return { success: false, error: 'Tanggal mulai tidak boleh setelah deadline.' };
   }
+  const createPeriodError = await checkProjectPeriod(parsed.data.projectId, [
+    [parsed.data.startDate, 'Tanggal mulai task'],
+    [parsed.data.dueDate, 'Deadline task'],
+  ]);
+  if (createPeriodError) return { success: false, error: createPeriodError };
 
   const supabase = createClient();
 
@@ -242,7 +248,7 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
     });
   }
 
-  revalidatePath(`/projects/${parsed.data.projectId}`);
+  revalidatePath(`/projects/${parsed.data.projectId}`, 'layout');
   return { success: true, data: { id: task.id } };
 }
 
@@ -306,6 +312,16 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   const nextDue = (updates.due_date !== undefined ? updates.due_date : currentTask.due_date) as string | null;
   if (nextStart && nextDue && nextStart > nextDue) {
     return { success: false, error: 'Tanggal mulai tidak boleh setelah deadline.' };
+  }
+  // Hanya tanggal yang benar-benar berubah yang dicek terhadap periode project.
+  const startChanged = updates.start_date !== undefined && updates.start_date !== currentTask.start_date;
+  const dueChanged = updates.due_date !== undefined && updates.due_date !== currentTask.due_date;
+  if (startChanged || dueChanged) {
+    const updatePeriodError = await checkProjectPeriod(currentTask.project_id, [
+      [startChanged ? nextStart : null, 'Tanggal mulai task'],
+      [dueChanged ? nextDue : null, 'Deadline task'],
+    ]);
+    if (updatePeriodError) return { success: false, error: updatePeriodError };
   }
 
   const { data: updatedTask, error: updateError } = await supabase
@@ -447,7 +463,7 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
     );
   }
 
-  revalidatePath(`/projects/${currentTask.project_id}`);
+  revalidatePath(`/projects/${currentTask.project_id}`, 'layout');
   revalidatePath(`/projects/${currentTask.project_id}/tasks/${currentTask.id}`);
   return { success: true };
 }

@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { AddOrganizationMemberForm } from '@/components/dashboard/add-organization-member-form';
 import { InviteManager } from '@/components/invites/invite-manager';
@@ -52,9 +51,8 @@ export default async function OrganizationMembersPage({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-8">
+    <div>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         <Link href={`/organizations/${organization.id}`} className="text-xs font-semibold uppercase tracking-wide text-teal">
           ← {organization.name}
         </Link>

@@ -42,6 +42,8 @@ export interface Profile {
   email: string;
   avatar_url: string | null;
   created_at: string;
+  /** v7: kapan user menyelesaikan/melewati tutorial (null = belum). */
+  onboarded_at?: string | null;
 }
 
 export interface Organization {

@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/modal';
 import { useAction } from '@/lib/use-action';
 import { dayOfTimestamp, formatTime } from '@/lib/dates';
 import { canManageScoped } from '@/lib/roles';
+import { clampDay, dateBounds, periodError, periodLabel, type ProjectPeriod } from '@/lib/period';
 import type { AttendanceStatus, ProjectRole } from '@/types/database';
 
 export interface EventRecord {
@@ -25,9 +26,10 @@ export interface EventRecord {
 interface Division { id: string; name: string }
 
 export function EventDialog({
-  projectId, divisions, myRole, myDivisionId, initialDay, event, onClose,
+  projectId, divisions, myRole, myDivisionId, initialDay, event, onClose, period,
 }: {
   projectId: string;
+  period?: ProjectPeriod;
   divisions: Division[];
   myRole: ProjectRole;
   myDivisionId: string | null;
@@ -35,17 +37,24 @@ export function EventDialog({
   event?: EventRecord;
   onClose: () => void;
 }) {
-  const { error, busy, run } = useAction();
+  const { error, setError, busy, run } = useAction();
   const [allDay, setAllDay] = useState(event?.all_day ?? false);
   const canGlobal = canManageScoped(myRole, myDivisionId, null);
   const allowed = divisions.filter((d) => canManageScoped(myRole, myDivisionId, d.id));
-  const startDay = event ? dayOfTimestamp(event.start_at) : initialDay;
-  const endDay = event ? dayOfTimestamp(event.end_at) : initialDay;
+  const day0 = period ? clampDay(initialDay, period) : initialDay;
+  const startDay = event ? dayOfTimestamp(event.start_at) : day0;
+  const endDay = event ? dayOfTimestamp(event.end_at) : day0;
+  const bounds = dateBounds(period);
+  const hint = periodLabel(period);
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     fd.set('allDay', allDay ? 'true' : 'false');
+    if (period) {
+      const err = periodError(period, String(fd.get('startDate') ?? ''), 'Acara') ?? periodError(period, String(fd.get('endDate') ?? ''), 'Acara');
+      if (err) { setError(err); return; }
+    }
     void run(() => (event ? updateEvent(fd) : createEvent(fd)), { onSuccess: onClose });
   }
 
@@ -82,11 +91,11 @@ export function EventDialog({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="ev-sd">Mulai</Label>
-            <Input id="ev-sd" name="startDate" type="date" defaultValue={startDay} required />
+            <Input id="ev-sd" name="startDate" type="date" defaultValue={startDay} required {...bounds} />
           </div>
           <div>
             <Label htmlFor="ev-ed">Selesai</Label>
-            <Input id="ev-ed" name="endDate" type="date" defaultValue={endDay} required />
+            <Input id="ev-ed" name="endDate" type="date" defaultValue={endDay} required {...bounds} />
           </div>
           {!allDay && (
             <>
@@ -101,6 +110,7 @@ export function EventDialog({
             </>
           )}
         </div>
+        {hint && <p className="-mt-1 text-xs text-muted">{hint}</p>}
         <div>
           <Label htmlFor="ev-loc">Lokasi (opsional)</Label>
           <Input id="ev-loc" name="location" defaultValue={event?.location ?? ''} maxLength={150} />
@@ -120,11 +130,14 @@ export function EventDialog({
   );
 }
 
-export function MilestoneDialog({ projectId, initialDay, onClose }: { projectId: string; initialDay: string; onClose: () => void }) {
-  const { error, busy, run } = useAction();
+export function MilestoneDialog({ projectId, initialDay, onClose, period }: { projectId: string; initialDay: string; onClose: () => void; period?: ProjectPeriod }) {
+  const { error, setError, busy, run } = useAction();
+  const hint = periodLabel(period);
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const err = period ? periodError(period, String(fd.get('dueDate') ?? ''), 'Tanggal milestone') : null;
+    if (err) { setError(err); return; }
     void run(() => createMilestone(fd), { onSuccess: onClose });
   }
   return (
@@ -137,7 +150,8 @@ export function MilestoneDialog({ projectId, initialDay, onClose }: { projectId:
         </div>
         <div>
           <Label htmlFor="ms-date">Tanggal</Label>
-          <Input id="ms-date" name="dueDate" type="date" defaultValue={initialDay} required />
+          <Input id="ms-date" name="dueDate" type="date" defaultValue={period ? clampDay(initialDay, period) : initialDay} required {...dateBounds(period)} />
+          {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">

@@ -1,6 +1,4 @@
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
-import { ProjectNav } from '@/components/projects/project-nav';
 import { BudgetManager, type EntryRow, type PlanRow } from '@/components/budget/budget-manager';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
@@ -24,11 +22,9 @@ export default async function BudgetPage({ params }: { params: { projectId: stri
   const myRole = membership.role as ProjectRole;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <ProjectNav projectId={pid} projectName={project.name} active="budget" myRole={myRole} />
-        <h1 className="mt-4 font-heading text-2xl font-bold text-ink">Budget Project</h1>
+    <div>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="font-heading text-xl font-bold text-ink sm:text-2xl">Budget Project</h1>
         {canViewBudgetRole(myRole) ? (
           <div className="mt-5">
             <BudgetManager

@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
 import { CreateTaskForm } from '@/components/tasks/create-task-form';
 import { TaskBoard, type BoardTask } from '@/components/tasks/task-board';
-import { ProjectNav } from '@/components/projects/project-nav';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { todayJakarta } from '@/lib/dates';
@@ -15,7 +13,7 @@ export default async function TaskBoardPage({ params }: { params: { projectId: s
 
   const [{ data: project }, { data: membership }, { data: tasks }, { data: members }, { data: divisions }, { data: docs }] =
     await Promise.all([
-      supabase.from('projects').select('id, name').eq('id', params.projectId).single(),
+      supabase.from('projects').select('id, name, start_date, end_date').eq('id', params.projectId).single(),
       supabase.from('project_members').select('role, division_id').eq('project_id', params.projectId).eq('user_id', user.id).maybeSingle(),
       supabase
         .from('tasks')
@@ -45,10 +43,8 @@ export default async function TaskBoardPage({ params }: { params: { projectId: s
     .map((m) => ({ id: m.profile.id as string, full_name: m.profile.full_name as string, role: m.role as ProjectRole, division_id: (m.division_id as string | null) ?? null }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <ProjectNav projectId={project.id} projectName={project.name} active="tasks" myRole={myRole} />
+    <div>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-heading text-2xl font-bold text-ink">Task Board</h1>
@@ -57,7 +53,7 @@ export default async function TaskBoardPage({ params }: { params: { projectId: s
           {myRole === 'ketua' ? (
             <span className="rounded-lg bg-sky/40 px-3 py-1.5 text-xs text-navy">Mode lihat (Ketua)</span>
           ) : (
-            <CreateTaskForm projectId={project.id} members={assignable} divisions={(divisions ?? []) as any[]} myRole={myRole} myDivisionId={myDivisionId} defaultStart={today} />
+            <CreateTaskForm projectId={project.id} members={assignable} divisions={(divisions ?? []) as any[]} myRole={myRole} myDivisionId={myDivisionId} defaultStart={today} period={{ start: (project as any).start_date ?? null, end: (project as any).end_date ?? null }} />
           )}
         </div>
         <div className="mt-4">

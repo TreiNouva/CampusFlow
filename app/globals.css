@@ -6,7 +6,7 @@ html,
 body {
   padding: 0;
   margin: 0;
-  background-color: #f8fafc;
+  background-color: #f6f8fa;
   color: #1b1b1f;
 }
 
@@ -93,7 +93,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #ff7a45;
+  color: #2b6c8a;
 }
 .auth-title {
   margin: 6px 0 0;
@@ -437,4 +437,32 @@ body {
 .anim-rise { animation: rise-in 0.45s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   .anim-grow-x, .anim-grow-y, .anim-rise { animation: none; }
+}
+
+/* v7: drawer menu HP */
+@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.drawer-in { animation: drawer-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) { .drawer-in { animation: none; } }
+
+/* v7: hari di luar periode project pada kalender */
+.cal-outside {
+  background-image: repeating-linear-gradient(135deg, rgba(95, 107, 122, 0.09) 0 6px, transparent 6px 12px);
+}
+
+.auth-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.auth-back:hover {
+  background: rgba(255, 255, 255, 0.22);
 }

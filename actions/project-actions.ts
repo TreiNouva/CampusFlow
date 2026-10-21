@@ -26,6 +26,9 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
   }
+  if (parsed.data.startDate && parsed.data.endDate && parsed.data.endDate < parsed.data.startDate) {
+    return { success: false, error: 'Tanggal selesai project tidak boleh sebelum tanggal mulai.' };
+  }
 
   const { data, error } = await createClient().rpc('create_project', {
     p_org: parsed.data.organizationId,

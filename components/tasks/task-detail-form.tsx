@@ -9,6 +9,7 @@ import { Input, Label, Select } from '@/components/ui/input';
 import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { NETWORK_ERROR_MESSAGE } from '@/lib/utils';
 import type { ProjectRole, Task } from '@/types/database';
+import { dateBounds, inPeriod, periodError, periodLabel, type ProjectPeriod } from '@/lib/period';
 
 interface Member {
   id: string;
@@ -18,8 +19,9 @@ interface Member {
 }
 
 export function TaskDetailForm({
-  task, members, divisions, myRole,
+  task, members, divisions, myRole, period,
 }: {
+  period?: ProjectPeriod;
   task: Task;
   members: Member[];
   divisions: { id: string; name: string }[];
@@ -37,6 +39,14 @@ export function TaskDetailForm({
   function handleSubmit(formData: FormData) {
     setError(null);
     setSuccess(false);
+    if (period) {
+      // Hanya cek tanggal yang DIUBAH, supaya task lama yang tanggalnya terlanjur di luar periode tetap bisa diubah statusnya.
+      const s = String(formData.get('startDate') ?? '');
+      const d = String(formData.get('dueDate') ?? '');
+      const err = (s !== (task.start_date ?? '') ? periodError(period, s, 'Tanggal mulai task') : null)
+        ?? (d !== (task.due_date ?? '') ? periodError(period, d, 'Deadline task') : null);
+      if (err) { setError(err); return; }
+    }
     setBusy(true);
     formData.set('taskId', task.id);
     startTransition(async () => {
@@ -111,14 +121,15 @@ export function TaskDetailForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="startDate">Mulai</Label>
-              <Input id="startDate" name="startDate" type="date" defaultValue={task.start_date ?? ''} />
+              <Input id="startDate" name="startDate" type="date" defaultValue={task.start_date ?? ''} {...(!task.start_date || (period && inPeriod(task.start_date, period)) ? dateBounds(period) : {})} />
             </div>
             <div>
               <Label htmlFor="dueDate">Deadline</Label>
-              <Input id="dueDate" name="dueDate" type="date" defaultValue={task.due_date ?? ''} />
+              <Input id="dueDate" name="dueDate" type="date" defaultValue={task.due_date ?? ''} {...(!task.due_date || (period && inPeriod(task.due_date, period)) ? dateBounds(period) : {})} />
             </div>
           </div>
 
+          {periodLabel(period) && <p className="-mt-2 text-[11px] text-muted">{periodLabel(period)}</p>}
           {error && <p className="text-sm text-red-600">{error}</p>}
           {success && <p className="text-sm text-green-600">Tersimpan. Email ke anggota terkait telah diproses.</p>}
 

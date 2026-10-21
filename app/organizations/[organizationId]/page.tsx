@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody } from '@/components/ui/card';
 import { CreateProjectForm } from '@/components/projects/create-project-form';
 import { JoinProjectButton } from '@/components/projects/join-project-button';
@@ -53,9 +52,8 @@ export default async function OrganizationOverviewPage({
     .map((m: any) => ({ id: m.user_id as string, name: (m.profile?.full_name as string) || 'Tanpa nama' }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
+    <div>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-teal">Organization</p>
@@ -116,7 +114,7 @@ export default async function OrganizationOverviewPage({
                           <span className="text-xs font-semibold text-muted">{progress}%</span>
                         </div>
                         <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
-                          <div className="h-2 rounded-full bg-orange" style={{ width: `${progress}%` }} />
+                          <div className="h-2 rounded-full bg-navy" style={{ width: `${progress}%` }} />
                         </div>
                         <p className="mt-2 text-xs text-muted">
                           {done}/{total} task selesai

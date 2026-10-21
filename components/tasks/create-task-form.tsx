@@ -8,6 +8,7 @@ import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { Modal } from '@/components/ui/modal';
 import { useAction } from '@/lib/use-action';
 import type { ProjectRole } from '@/types/database';
+import { clampDay, dateBounds, periodError, periodLabel, type ProjectPeriod } from '@/lib/period';
 
 interface Member { id: string; full_name: string; role: ProjectRole; division_id: string | null }
 
@@ -16,8 +17,9 @@ interface Member { id: string; full_name: string; role: ProjectRole; division_id
  * dan hanya bisa menugaskan sesama anggota divisi yang sama.
  */
 export function CreateTaskForm({
-  projectId, members, divisions, myRole, myDivisionId, defaultStart,
+  projectId, members, divisions, myRole, myDivisionId, defaultStart, period,
 }: {
+  period?: ProjectPeriod;
   projectId: string;
   members: Member[];
   divisions: { id: string; name: string }[];
@@ -41,6 +43,11 @@ export function CreateTaskForm({
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    if (period) {
+      const err = periodError(period, String(fd.get('startDate') ?? ''), 'Tanggal mulai task')
+        ?? periodError(period, String(fd.get('dueDate') ?? ''), 'Deadline task');
+      if (err) { setError(err); return; }
+    }
     void run(() => createTask(fd), { onSuccess: () => setOpen(false) });
   }
 
@@ -98,14 +105,17 @@ export function CreateTaskForm({
               </div>
               <div>
                 <Label htmlFor="startDate">Mulai</Label>
-                <Input id="startDate" name="startDate" type="date" defaultValue={defaultStart} />
+                <Input id="startDate" name="startDate" type="date" defaultValue={period ? clampDay(defaultStart, period) : defaultStart} {...dateBounds(period)} />
               </div>
               <div>
                 <Label htmlFor="dueDate">Deadline</Label>
-                <Input id="dueDate" name="dueDate" type="date" />
+                <Input id="dueDate" name="dueDate" type="date" {...dateBounds(period)} />
               </div>
             </div>
-            <p className="text-[11px] text-muted">Tanggal mulai & deadline dipakai untuk menampilkan task di kalender project.</p>
+            <p className="text-[11px] text-muted">
+              Tanggal mulai & deadline dipakai untuk menampilkan task di kalender project.
+              {periodLabel(period) ? ` ${periodLabel(period)}.` : ''}
+            </p>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="flex gap-2 pt-1">
               <Button type="submit" className="flex-1" disabled={busy}>{busy ? 'Menyimpan...' : 'Simpan'}</Button>

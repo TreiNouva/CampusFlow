@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { ProjectNav } from '@/components/projects/project-nav';
 import { DocumentUploader } from '@/components/documents/document-uploader';
 import { DocumentList, type DocItem } from '@/components/documents/document-list';
 import { requireUser } from '@/lib/auth/session';
@@ -50,11 +48,9 @@ export default async function DocumentsPage({ params, searchParams }: { params: 
   for (const d of (docs ?? []) as any[]) counts.set(d.category, (counts.get(d.category) ?? 0) + 1);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <ProjectNav projectId={pid} projectName={project.name} active="documents" myRole={myRole} />
-        <h1 className="mt-4 font-heading text-2xl font-bold text-ink">Dokumen Project</h1>
+    <div>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="font-heading text-xl font-bold text-ink sm:text-2xl">Dokumen Project</h1>
         <p className="text-sm text-muted">Proposal, LPJ, rundown, notulen, dan berkas lain. Lampiran task juga muncul di sini.</p>
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">

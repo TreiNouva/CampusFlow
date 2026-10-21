@@ -4,7 +4,7 @@ import { STATUS_LABEL } from '@/lib/utils';
 import type { TaskStatus } from '@/types/database';
 
 const STATUS_FILL: Record<TaskStatus, string> = {
-  todo: '#9CA3AF', in_progress: '#1C7293', review: '#A855F7', done: '#22C55E', blocked: '#EF4444',
+  todo: '#A0A8B4', in_progress: '#2B6C8A', review: '#64748B', done: '#3F8F63', blocked: '#C24141',
 };
 
 /** Task selesai per hari (14 hari terakhir) + sebaran status. `completedDays` berisi tanggal (YYYY-MM-DD) selesai tiap task. */
@@ -29,9 +29,9 @@ export function CompletionChart({
             const x = i * (bw + gap);
             return (
               <g key={days[i]}>
-                <rect className="anim-grow-y" style={{ transformBox: 'fill-box', animationDelay: `${i * 30}ms` }} x={x} y={H - Math.max(h, c ? 2 : 0)} width={bw} height={Math.max(h, c ? 2 : 0)} rx="3" fill={days[i] === today ? '#FF7A45' : '#1C7293'} />
+                <rect className="anim-grow-y" style={{ transformBox: 'fill-box', animationDelay: `${i * 30}ms` }} x={x} y={H - Math.max(h, c ? 2 : 0)} width={bw} height={Math.max(h, c ? 2 : 0)} rx="3" fill={days[i] === today ? '#12365E' : '#9DB7CC'} />
                 {c > 0 && <text x={x + bw / 2} y={H - h - 3} textAnchor="middle" fontSize="9" fill="#12365E" fontWeight="700">{c}</text>}
-                {(i % 2 === 1 || i === 13) && <text x={x + bw / 2} y={H + 12} textAnchor="middle" fontSize="8" fill="#5B6472">{parseDay(days[i]).getUTCDate()}</text>}
+                {(i % 2 === 1 || i === 13) && <text x={x + bw / 2} y={H + 12} textAnchor="middle" fontSize="8" fill="#5F6B7A">{parseDay(days[i]).getUTCDate()}</text>}
               </g>
             );
           })}

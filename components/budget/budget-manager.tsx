@@ -51,9 +51,9 @@ export function BudgetManager({ projectId, plans, entries, divisions, canManage,
   const pct = calcProgress(spent, planned);
   const stats = [
     { label: 'Total rencana', value: formatRupiah(planned), tone: 'text-navy' },
-    { label: 'Terpakai', value: formatRupiah(spent), tone: pct > 100 ? 'text-red-600' : 'text-orange', sub: planned ? `${pct}% dari rencana` : undefined },
-    { label: 'Pemasukan', value: formatRupiah(income), tone: 'text-green-600' },
-    { label: 'Saldo kas', value: formatRupiah(income - spent), tone: income - spent < 0 ? 'text-red-600' : 'text-teal', sub: 'pemasukan − pengeluaran' },
+    { label: 'Terpakai', value: formatRupiah(spent), tone: pct > 100 ? 'text-red-600' : 'text-navy', sub: planned ? `${pct}% dari rencana` : undefined },
+    { label: 'Pemasukan', value: formatRupiah(income), tone: 'text-navy' },
+    { label: 'Saldo kas', value: formatRupiah(income - spent), tone: income - spent < 0 ? 'text-red-600' : 'text-navy', sub: 'pemasukan − pengeluaran' },
   ];
 
   return (
@@ -69,7 +69,7 @@ export function BudgetManager({ projectId, plans, entries, divisions, canManage,
       </div>
       {planned > 0 && (
         <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
-          <div className={cn('anim-grow-x h-full rounded-full', pct > 100 ? 'bg-red-500' : pct > 85 ? 'bg-orange' : 'bg-teal')} style={{ width: `${Math.min(100, pct)}%` }} />
+          <div className={cn('anim-grow-x h-full rounded-full', pct > 100 ? 'bg-red-500' : pct > 85 ? 'bg-orange' : 'bg-navy')} style={{ width: `${Math.min(100, pct)}%` }} />
         </div>
       )}
       {unplanned > 0 && (

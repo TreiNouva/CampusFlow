@@ -19,6 +19,7 @@ interface Props {
 export function CreateProjectForm({ organizationId, candidates, currentUserId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [start, setStart] = useState('');
   const [, startTransition] = useTransition();
   const router = useRouter();
   const noCandidate = candidates.length === 0;
@@ -82,13 +83,14 @@ export function CreateProjectForm({ organizationId, candidates, currentUserId }:
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="startDate">Mulai</Label>
-              <Input id="startDate" name="startDate" type="date" />
+              <Input id="startDate" name="startDate" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="endDate">Selesai</Label>
-              <Input id="endDate" name="endDate" type="date" />
+              <Input id="endDate" name="endDate" type="date" min={start || undefined} />
             </div>
           </div>
+          <p className="-mt-1 text-xs text-muted">Semua task, acara, dan milestone nanti harus berada di dalam periode ini.</p>
           {noCandidate && (
             <p className="rounded-lg bg-orange-light px-3 py-2 text-xs text-orange">
               Belum ada anggota yang bisa menjadi Project Manager.

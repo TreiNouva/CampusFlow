@@ -36,7 +36,7 @@ function revalidateOrg(organizationId: string) {
   revalidatePath(`/organizations/${organizationId}/members`);
 }
 function revalidateProject(projectId: string) {
-  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}`, 'layout');
   revalidatePath(`/projects/${projectId}/members`);
 }
 

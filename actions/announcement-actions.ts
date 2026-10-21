@@ -131,7 +131,7 @@ export async function createAnnouncement(formData: FormData): Promise<ActionResu
     divisionId,
   });
 
-  revalidatePath(`/projects/${parsed.data.projectId}`);
+  revalidatePath(`/projects/${parsed.data.projectId}`, 'layout');
   return { success: true };
 }
 
@@ -181,7 +181,7 @@ export async function updateAnnouncement(formData: FormData): Promise<ActionResu
     });
   }
 
-  revalidatePath(`/projects/${parsed.data.projectId}`);
+  revalidatePath(`/projects/${parsed.data.projectId}`, 'layout');
   return { success: true };
 }
 
@@ -208,6 +208,6 @@ export async function deleteAnnouncement(formData: FormData): Promise<ActionResu
     return { success: false, error: 'Pengumuman tidak ditemukan atau kamu tidak berhak menghapusnya.' };
   }
 
-  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}`, 'layout');
   return { success: true };
 }

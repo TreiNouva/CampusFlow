@@ -14,6 +14,7 @@ import {
 import { MILESTONE_COLOR, divisionColor, GLOBAL_COLOR } from '@/lib/colors';
 import { canManageAnyScope, canManageScoped } from '@/lib/roles';
 import { cn } from '@/lib/utils';
+import { inPeriod, periodLabel, type ProjectPeriod } from '@/lib/period';
 import type { ProjectRole } from '@/types/database';
 
 const HOUR_PX = 44;
@@ -24,6 +25,8 @@ interface Division { id: string; name: string; color: string }
 interface Props {
   projectId: string;
   today: string;
+  /** Periode project: hari di luar periode diberi arsir dan tidak dipakai sebagai default form. */
+  period?: ProjectPeriod;
   items: CalItem[];
   divisions: Division[];
   events: EventRecord[];
@@ -35,9 +38,11 @@ interface Props {
 
 const filterKey = (i: CalItem) => (i.kind === 'milestone' ? 'milestone' : i.divisionId ?? 'global');
 
-export function ProjectCalendar({ projectId, today, items, divisions, events, participants, myRole, myDivisionId, myUserId }: Props) {
+export function ProjectCalendar({ projectId, today, period = { start: null, end: null }, items, divisions, events, participants, myRole, myDivisionId, myUserId }: Props) {
   const [view, setView] = useState<'week' | 'month'>('week');
-  const [cursor, setCursor] = useState(today);
+  // Mulai dari hari ini; jika hari ini di luar periode project, lompat ke awal/akhir periode.
+  const [cursor, setCursor] = useState(() => (inPeriod(today, period) ? today : (period.start && today < period.start ? period.start : period.end ?? today)));
+  const outside = (d: string) => !inPeriod(d, period);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<CalItem | null>(null);
   const [dialog, setDialog] = useState<null | { type: 'event'; event?: EventRecord } | { type: 'milestone' }>(null);
@@ -129,6 +134,12 @@ export function ProjectCalendar({ projectId, today, items, divisions, events, pa
             <p className="mt-2 text-[11px] leading-snug text-muted">
               Task tampil sebagai bilah per hari sesuai warna divisinya. Garis tebal = acara/jadwal.
             </p>
+            {periodLabel(period) && (
+              <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-muted">
+                <span className="cal-outside mt-0.5 h-3 w-3 shrink-0 rounded-sm border border-gray-200" aria-hidden />
+                Arsir = di luar periode project. {periodLabel(period)}.
+              </p>
+            )}
           </div>
         </aside>
 
@@ -142,9 +153,9 @@ export function ProjectCalendar({ projectId, today, items, divisions, events, pa
                 {weekDays.map((d, i) => {
                   const isToday = d === today;
                   return (
-                    <div key={d} className="py-2 text-center">
+                    <div key={d} className={cn('py-2 text-center', outside(d) && 'cal-outside')} title={outside(d) ? 'Di luar periode project' : undefined}>
                       <p className="text-[11px] font-semibold uppercase text-muted">{DAY_NAMES_SHORT[i]}</p>
-                      <p className={cn('mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold', isToday ? 'bg-orange text-white' : 'text-ink')}>
+                      <p className={cn('mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold', isToday ? 'bg-navy text-white' : 'text-ink')}>
                         {parseDay(d).getUTCDate()}
                       </p>
                     </div>
@@ -157,7 +168,7 @@ export function ProjectCalendar({ projectId, today, items, divisions, events, pa
                 <div className="pr-1 pt-1 text-right text-[10px] leading-tight text-muted">sehari<br />penuh</div>
                 <div className="relative" style={{ height: Math.max(laneCount, 1) * 22 + 8 }}>
                   <div className="pointer-events-none absolute inset-0 grid grid-cols-7">
-                    {weekDays.map((d) => <div key={d} className={cn('border-l border-gray-100', d === today && 'bg-orange/5')} />)}
+                    {weekDays.map((d) => <div key={d} className={cn('border-l border-gray-100', d === today && 'bg-sky/50', outside(d) && 'cal-outside')} />)}
                   </div>
                   {bars.map((b) => (
                     <button key={b.item.id + b.item.startDay} type="button" onClick={() => setSelected(b.item)}
@@ -188,7 +199,7 @@ export function ProjectCalendar({ projectId, today, items, divisions, events, pa
                   {weekDays.map((d) => {
                     const placed = layoutTimed(visible, d);
                     return (
-                      <div key={d} className={cn('relative border-l border-gray-100', d === today && 'bg-orange/5')}>
+                      <div key={d} className={cn('relative border-l border-gray-100', d === today && 'bg-sky/50', outside(d) && 'cal-outside')}>
                         {Array.from({ length: 24 }, (_, h) => (
                           <div key={h} className="absolute inset-x-0 border-t border-gray-100" style={{ top: h * HOUR_PX }} />
                         ))}
@@ -218,7 +229,7 @@ export function ProjectCalendar({ projectId, today, items, divisions, events, pa
               </div>
             </div>
           ) : (
-            <MonthGrid cursor={cursor} today={today} items={visible} onSelect={setSelected} onDayClick={(d) => { setCursor(d); setView('week'); }} selectedId={selected?.id} />
+            <MonthGrid cursor={cursor} today={today} items={visible} outside={outside} onSelect={setSelected} onDayClick={(d) => { setCursor(d); setView('week'); }} selectedId={selected?.id} />
           )}
 
           {/* Panel detail */}
@@ -266,9 +277,9 @@ export function ProjectCalendar({ projectId, today, items, divisions, events, pa
 
       {dialog?.type === 'event' && (
         <EventDialog projectId={projectId} divisions={divisions} myRole={myRole} myDivisionId={myDivisionId}
-          initialDay={cursor} event={dialog.event} onClose={() => { setDialog(null); setSelected(null); }} />
+          initialDay={cursor} period={period} event={dialog.event} onClose={() => { setDialog(null); setSelected(null); }} />
       )}
-      {dialog?.type === 'milestone' && <MilestoneDialog projectId={projectId} initialDay={cursor} onClose={() => setDialog(null)} />}
+      {dialog?.type === 'milestone' && <MilestoneDialog projectId={projectId} initialDay={cursor} period={period} onClose={() => setDialog(null)} />}
     </div>
   );
 }
@@ -308,9 +319,9 @@ function MiniMonth({ cursor, today, weekStart, onPick, items }: { cursor: string
             <button key={d} type="button" onClick={() => onPick(d)}
               className={cn('relative my-px h-6 transition-colors', inWeek && 'bg-sky/60', d === weekStart && 'rounded-l-md', d === weekEnd && 'rounded-r-md',
                 !inMonth && 'text-gray-300', d === today ? 'font-bold text-white' : 'hover:bg-gray-100')}>
-              {d === today && <span className="absolute inset-0 m-auto h-6 w-6 rounded-full bg-orange" />}
+              {d === today && <span className="absolute inset-0 m-auto h-6 w-6 rounded-full bg-navy" />}
               <span className="relative">{parseDay(d).getUTCDate()}</span>
-              {busy.has(d) && d !== today && <span className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-teal" />}
+              {busy.has(d) && d !== today && <span className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-gray-400" />}
             </button>
           );
         })}
@@ -319,8 +330,8 @@ function MiniMonth({ cursor, today, weekStart, onPick, items }: { cursor: string
   );
 }
 
-function MonthGrid({ cursor, today, items, onSelect, onDayClick, selectedId }: {
-  cursor: string; today: string; items: CalItem[]; onSelect: (i: CalItem) => void; onDayClick: (d: string) => void; selectedId?: string;
+function MonthGrid({ cursor, today, items, onSelect, onDayClick, selectedId, outside }: {
+  cursor: string; today: string; items: CalItem[]; outside: (d: string) => boolean; onSelect: (i: CalItem) => void; onDayClick: (d: string) => void; selectedId?: string;
 }) {
   const rows = monthMatrix(cursor);
   return (
@@ -334,9 +345,9 @@ function MonthGrid({ cursor, today, items, onSelect, onDayClick, selectedId }: {
             const inMonth = d.slice(0, 7) === cursor.slice(0, 7);
             const list = itemsOnDay(items, d);
             return (
-              <div key={d} className={cn('min-h-[92px] border-b border-l border-gray-100 p-1', !inMonth && 'bg-gray-50/70')}>
+              <div key={d} className={cn('min-h-[92px] border-b border-l border-gray-100 p-1', !inMonth && 'bg-gray-50/70', outside(d) && 'cal-outside')}>
                 <button type="button" onClick={() => onDayClick(d)}
-                  className={cn('flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold hover:bg-gray-100', d === today ? 'bg-orange text-white hover:bg-orange' : inMonth ? 'text-ink' : 'text-gray-300')}>
+                  className={cn('flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold hover:bg-gray-100', d === today ? 'bg-navy text-white hover:bg-navy' : inMonth ? 'text-ink' : 'text-gray-300')}>
                   {parseDay(d).getUTCDate()}
                 </button>
                 <div className="mt-0.5 space-y-0.5">

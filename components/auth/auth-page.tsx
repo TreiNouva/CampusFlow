@@ -93,6 +93,7 @@ export function AuthPage({
         </div>
       </div>
 
+      <a href="/" className="auth-back">← Belum kenal CampusFlow? Lihat isi aplikasinya</a>
       <p className="auth-copy">© {new Date().getFullYear()} CampusFlow — Run Your Organization, Not Your Spreadsheets.</p>
 
       {overlayLabel && <LoadingOverlay label={overlayLabel} />}

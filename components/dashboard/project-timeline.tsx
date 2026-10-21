@@ -30,10 +30,10 @@ export function ProjectTimeline({
       </CardHeader>
       <CardBody>
         <div className="relative mt-6 h-3 rounded-full bg-gray-100">
-          <div className="anim-grow-x absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-teal to-navy" style={{ width: `${elapsed}%` }} />
+          <div className="anim-grow-x absolute inset-y-0 left-0 rounded-full bg-navy" style={{ width: `${elapsed}%` }} />
           {sorted.map((m) => (
             <div key={m.id} className="group absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${pct(m.due_date)}%` }}>
-              <span className={`block h-4 w-4 rotate-45 rounded-sm border-2 border-white shadow ${m.due_date < today ? 'bg-green-500' : 'bg-orange'}`} />
+              <span className={`block h-4 w-4 rotate-45 rounded-sm border-2 border-white shadow ${m.due_date < today ? 'bg-gray-400' : 'bg-navy'}`} />
               <span className="pointer-events-none absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] text-white shadow group-hover:block">
                 {m.title} · {shortDate(m.due_date)}
               </span>
@@ -54,7 +54,7 @@ export function ProjectTimeline({
           <ul className="mt-3 flex flex-wrap gap-2">
             {sorted.slice(0, 6).map((m) => (
               <li key={m.id} className="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs text-ink">
-                <span className={m.due_date < today ? 'text-green-600' : 'text-orange'}>◆</span> {m.title} · {shortDate(m.due_date)}
+                <span className={m.due_date < today ? 'text-gray-400' : 'text-navy'}>◆</span> {m.title} · {shortDate(m.due_date)}
               </li>
             ))}
           </ul>

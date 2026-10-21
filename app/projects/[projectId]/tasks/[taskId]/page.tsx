@@ -1,10 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui/card';
 import { TaskDetailForm } from '@/components/tasks/task-detail-form';
 import { ActivityFeed } from '@/components/projects/activity-feed';
-import { ProjectNav } from '@/components/projects/project-nav';
 import { DocumentUploader } from '@/components/documents/document-uploader';
 import { DocumentList, type DocItem } from '@/components/documents/document-list';
 import { requireUser } from '@/lib/auth/session';
@@ -40,7 +38,7 @@ export default async function TaskDetailPage({ params }: { params: { projectId: 
         .select('*, uploader:profiles!documents_uploaded_by_fkey(full_name)')
         .eq('task_id', params.taskId)
         .order('created_at', { ascending: false }),
-      supabase.from('projects').select('name').eq('id', params.projectId).single(),
+      supabase.from('projects').select('name, start_date, end_date').eq('id', params.projectId).single(),
     ]);
   if (!task || !membership) notFound();
 
@@ -57,10 +55,8 @@ export default async function TaskDetailPage({ params }: { params: { projectId: 
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <ProjectNav projectId={params.projectId} projectName={project?.name ?? 'Project'} active="tasks" myRole={myRole} />
+    <div>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         <Link href={`/projects/${params.projectId}/tasks`} className="mt-4 inline-block text-xs font-semibold uppercase tracking-wide text-teal">
           ← Kembali ke Task Board
         </Link>
@@ -124,6 +120,7 @@ export default async function TaskDetailPage({ params }: { params: { projectId: 
                   .map((m) => ({ id: m.profile.id, full_name: m.profile.full_name, role: m.role as ProjectRole, division_id: m.division_id ?? null }))}
                 divisions={(divisions ?? []) as any[]}
                 myRole={myRole}
+                period={{ start: (project as any)?.start_date ?? null, end: (project as any)?.end_date ?? null }}
               />
             ) : (
               <Card>

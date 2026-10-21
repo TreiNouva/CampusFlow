@@ -281,3 +281,23 @@ oleh pembuat atau PM/Wakil PM, dan dikirim lewat email (tidak ke pembuatnya send
 - **Budget** (Ketua, PM, Wakil PM, Bendahara melihat; PM/Wakil PM/Bendahara mengubah): rencana vs realisasi + transaksi.
 - **Reset password masih ke localhost?** Itu pengaturan Supabase, bukan Vercel: Authentication → URL Configuration → *Site URL* = domain Vercel kamu,
   dan *Redirect URLs* tambahkan `https://DOMAIN-KAMU/auth/callback` (lihat §10.1). Lalu minta link reset yang BARU.
+
+## 13. Versi 7: Periode Project, Halaman Depan, Tutorial, Navigasi Baru (migrasi 0004)
+
+**Jalankan `supabase/migrations/0004_project_period_onboarding.sql` di SQL Editor Supabase sebelum deploy.**
+
+- **Periode project ditegakkan.** Deadline/tanggal mulai task, milestone, dan acara tidak boleh sebelum
+  tanggal mulai atau setelah tanggal selesai project. Dicek di form (input tanggal dibatasi), di server action,
+  dan di database (trigger). Task lama yang terlanjur di luar periode tetap bisa diubah statusnya; yang dicek
+  hanya tanggal yang diubah. Kalender memberi arsir pada hari di luar periode.
+- **Halaman depan (`/`)** menjelaskan isi aplikasi sebelum login: menu yang akan ditemui, cara mulai, peran, paket, FAQ.
+- **Tutorial singkat setelah login** (7 langkah, bisa dilewati). Status tersimpan di `profiles.onboarded_at`;
+  bisa dibuka lagi dari menu → *Panduan singkat*.
+- **Navigasi baru ala m-banking.** Laptop: menu samping. HP: tombol ☰ + bar navigasi bawah (Ringkasan, Task,
+  Kalender, Dokumen, Lainnya) dan grid menu cepat di Ringkasan.
+- **Halaman project dipecah** supaya tidak penuh: Ringkasan, Kalender (`/calendar`), Pengumuman (`/announcements`),
+  Statistik (`/stats`), ditambah Task, Dokumen, Budget, Anggota, Notifikasi.
+- **Palet warna lebih tenang:** navy sebagai warna utama, amber hanya untuk peringatan, merah hanya untuk
+  telat/error, warna divisi dibuat redup, ikon emoji diganti ikon garis satu warna.
+- **Rencana paket** ada di `lib/plans.ts` (draf, angka bisa diubah di satu tempat): Gratis, Organisasi
+  (kuota dasar + tambahan per 10 anggota), Kampus.

@@ -4,6 +4,7 @@ const config: Config = {
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
+    './lib/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
@@ -12,14 +13,18 @@ const config: Config = {
           DEFAULT: '#12365E',
           dark: '#0E2A49',
         },
-        teal: '#1C7293',
+        // v7: palet dibuat lebih tenang — satu warna utama (navy), satu aksen (teal),
+        // amber HANYA untuk peringatan, merah HANYA untuk error/telat. Sisanya abu-abu.
+        teal: '#2B6C8A',
         orange: {
-          DEFAULT: '#FF7A45',
-          light: '#FDEBE1',
+          // nama token dipertahankan agar kode lama tetap jalan; maknanya kini "peringatan"
+          DEFAULT: '#B26B12',
+          light: '#FBF3E6',
         },
-        sky: '#CFE4F0',
-        ink: '#1B1B1F',
-        muted: '#5B6472',
+        sky: '#E8EFF5',
+        ink: '#1B2430',
+        muted: '#5F6B7A',
+        line: '#E6EAF0',
       },
       fontFamily: {
         heading: ['Georgia', 'Cambria', 'serif'],

@@ -27,7 +27,7 @@ export function ActivityFeed({ activity }: { activity: ActivityLog[] }) {
     <ol className="space-y-4">
       {activity.map((log) => (
         <li key={log.id} className="flex gap-3 text-sm">
-          <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-orange" />
+          <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-gray-300" />
           <div>
             <p className="text-ink">
               <span className="font-semibold">{log.actor?.full_name ?? 'Seseorang'}</span>{' '}

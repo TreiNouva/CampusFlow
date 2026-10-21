@@ -26,7 +26,7 @@ export interface BoardTask {
 
 const COLUMNS: TaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'blocked'];
 const COLUMN_ACCENT: Record<TaskStatus, string> = {
-  todo: '#9CA3AF', in_progress: '#1C7293', review: '#A855F7', done: '#22C55E', blocked: '#EF4444',
+  todo: '#A0A8B4', in_progress: '#2B6C8A', review: '#64748B', done: '#3F8F63', blocked: '#C24141',
 };
 
 export function TaskBoard({
@@ -78,7 +78,7 @@ export function TaskBoard({
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
           { label: 'Total task', value: total, tone: 'text-navy' },
-          { label: 'Selesai', value: `${done} (${total ? Math.round((done / total) * 100) : 0}%)`, tone: 'text-green-600' },
+          { label: 'Selesai', value: `${done} (${total ? Math.round((done / total) * 100) : 0}%)`, tone: 'text-navy' },
           { label: 'Jatuh tempo ≤ 3 hari', value: dueSoon, tone: 'text-orange' },
           { label: 'Telat', value: late, tone: late ? 'text-red-600' : 'text-muted' },
         ].map((s) => (

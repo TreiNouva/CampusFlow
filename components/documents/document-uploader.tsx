@@ -82,7 +82,7 @@ export function DocumentUploader({ projectId, taskId = null, scopeOptions, compa
         role="button" tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && inputRef.current?.click()}
         className={cn('cursor-pointer rounded-lg border-2 border-dashed text-center transition-colors',
-          compact ? 'px-4 py-4' : 'px-4 py-8', drag ? 'border-orange bg-orange-light' : 'border-gray-200 hover:border-teal hover:bg-sky/30')}
+          compact ? 'px-4 py-4' : 'px-4 py-8', drag ? 'border-navy bg-sky' : 'border-gray-200 hover:border-teal hover:bg-sky/30')}
       >
         <p className="text-sm font-semibold text-navy">{drag ? 'Lepaskan file di sini' : '📎 Tarik file ke sini atau klik untuk memilih'}</p>
         <p className="mt-0.5 text-xs text-muted">PDF, Word, Excel, PowerPoint, gambar, ZIP · maks. {MAX_DOCUMENT_BYTES / 1024 / 1024} MB per file</p>

@@ -63,7 +63,7 @@ export async function acceptInvite(
   const result = data as { organization_id: string; project_id: string | null; joined: boolean };
   revalidatePath('/dashboard');
   revalidatePath(`/organizations/${result.organization_id}`);
-  if (result.project_id) revalidatePath(`/projects/${result.project_id}`);
+  if (result.project_id) revalidatePath(`/projects/${result.project_id}`, 'layout');
   return {
     success: true,
     data: { organizationId: result.organization_id, projectId: result.project_id, joined: result.joined },

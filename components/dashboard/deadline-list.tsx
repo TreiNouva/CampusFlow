@@ -12,14 +12,14 @@ export function DeadlineList({ rows, today, projectId, title = 'Deadline Terdeka
     <Card>
       <CardHeader><h2 className="font-heading text-base font-bold text-ink">{title}</h2></CardHeader>
       <CardBody className="space-y-2">
-        {rows.length === 0 && <p className="text-sm text-muted">Tidak ada deadline yang menunggu. 🎉</p>}
+        {rows.length === 0 && <p className="text-sm text-muted">Tidak ada deadline dalam 14 hari ke depan.</p>}
         {rows.map((r) => {
           const left = diffDays(r.due, today);
           const c = divisionColor(r.divisionColor);
-          const tone = left < 0 ? 'bg-red-100 text-red-700' : left <= 2 ? 'bg-orange-light text-orange' : 'bg-gray-100 text-gray-700';
+          const tone = left < 0 ? 'bg-red-50 text-red-700' : left <= 2 ? 'bg-orange-light text-orange' : 'bg-gray-100 text-gray-700';
           return (
             <Link key={r.id} href={`/projects/${projectId}/tasks/${r.id}`}
-              className="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2 transition hover:border-navy hover:bg-gray-50"
+              className="flex items-center gap-3 rounded-lg border border-line px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50"
               style={{ borderLeft: `4px solid ${c.accent}` }}>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-ink">{r.title}</p>
