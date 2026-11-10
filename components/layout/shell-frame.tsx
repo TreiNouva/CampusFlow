@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -43,7 +44,7 @@ export function ShellFrame({
   const menu = (
     <nav className="flex h-full flex-col" aria-label="Menu utama">
       <div className="flex items-center justify-between px-5 pb-3 pt-5">
-        <Link href="/dashboard" className="font-heading text-lg font-bold text-navy">CampusFlow</Link>
+        <Link href="/dashboard" aria-label="CampusFlow, ke beranda"><Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={148} height={38} priority /></Link>
         <button type="button" onClick={() => setDrawer(false)} className="rounded-lg p-1.5 text-muted hover:bg-gray-100 lg:hidden" aria-label="Tutup menu">
           <Icon name="close" />
         </button>

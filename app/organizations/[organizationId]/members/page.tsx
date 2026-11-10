@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { getOrgBilling } from '@/lib/billing';
+import { PLAN_NAME } from '@/lib/plans';
 import { notFound } from 'next/navigation';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { AddOrganizationMemberForm } from '@/components/dashboard/add-organization-member-form';
@@ -42,6 +44,8 @@ export default async function OrganizationMembersPage({
   if (!organization || !myMembership) notFound();
 
   const myRole = myMembership.role as OrgRole;
+  const billing = await getOrgBilling(organization.id, myRole);
+  const seatsLeft = billing.memberLimit === null ? null : Math.max(0, billing.memberLimit - billing.memberCount);
   const isManager = isOrgManagerRole(myRole);
   const mayInvite = canInviteToOrg(myRole);
 
@@ -57,6 +61,13 @@ export default async function OrganizationMembersPage({
           ← {organization.name}
         </Link>
         <h1 className="font-heading text-2xl font-bold text-ink">Anggota & Undangan</h1>
+        {seatsLeft !== null && (
+          <p className={`mt-2 inline-flex flex-wrap items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${seatsLeft === 0 ? 'bg-red-50 text-red-700' : seatsLeft <= 3 ? 'bg-orange-light text-[#7A4A0C]' : 'bg-gray-100 text-gray-700'}`}>
+            {billing.memberCount}/{billing.memberLimit} anggota ({PLAN_NAME[billing.plan]}) ·{' '}
+            {seatsLeft === 0 ? 'kuota penuh, undangan baru akan ditolak.' : `sisa ${seatsLeft} slot.`}
+            <Link href={`/organizations/${organization.id}/billing`} className="font-semibold underline-offset-2 hover:underline">Tambah kuota</Link>
+          </p>
+        )}
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">

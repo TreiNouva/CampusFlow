@@ -8,6 +8,8 @@ import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { calcProgress } from '@/lib/utils';
 import type { OrgRole } from '@/types/database';
+import { getOrgBilling } from '@/lib/billing';
+import { PLAN_NAME } from '@/lib/plans';
 
 export default async function OrganizationOverviewPage({
   params,
@@ -46,6 +48,8 @@ export default async function OrganizationOverviewPage({
   if (!organization || !membership) notFound(); // RLS sudah menahan query; ini pengaman tambahan di UI.
 
   const myRole = membership.role as OrgRole;
+  const billing = await getOrgBilling(organization.id, myRole);
+  const projectsFull = billing.projectLimit !== null && billing.activeProjects >= billing.projectLimit;
   const joinedIds = new Set((myProjects ?? []).map((p: any) => p.project_id));
   // Kandidat Project Manager: semua anggota organisasi (Ketua boleh menjadi PM jika mau atau perlu)
   const candidates = (members ?? [])
@@ -56,7 +60,7 @@ export default async function OrganizationOverviewPage({
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-teal">Organization</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-teal">Organisasi</p>
             <div className="flex items-center gap-3">
               <h1 className="font-heading text-2xl font-bold text-ink">{organization.name}</h1>
               <OrgRoleBadge role={myRole} />
@@ -127,12 +131,36 @@ export default async function OrganizationOverviewPage({
             </div>
           </div>
 
-          <div>
-            <CreateProjectForm
-              organizationId={organization.id}
-              candidates={candidates}
-              currentUserId={user.id}
-            />
+          <div className="space-y-4">
+            <Link href={`/organizations/${organization.id}/billing`} className="block rounded-card border border-line bg-white p-4 transition hover:border-gray-300">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">Paket {PLAN_NAME[billing.plan]}</p>
+                <span className="text-xs font-semibold text-navy">Kelola →</span>
+              </div>
+              <p className="mt-1 text-sm text-ink">
+                {billing.memberCount}{billing.memberLimit !== null ? `/${billing.memberLimit}` : ''} anggota ·{' '}
+                {billing.activeProjects}{billing.projectLimit !== null ? `/${billing.projectLimit}` : ''} project aktif
+              </p>
+            </Link>
+            {projectsFull ? (
+              <Card>
+                <CardBody className="space-y-2 text-sm">
+                  <h2 className="font-heading text-base font-bold text-ink">Kuota project penuh</h2>
+                  <p className="text-muted">
+                    Paket Gratis berisi {billing.projectLimit} project aktif. Project yang sudah lewat tanggal selesai tidak dihitung.
+                  </p>
+                  <Link href={`/organizations/${organization.id}/billing`} className="inline-block rounded-lg bg-navy px-4 py-2 font-semibold text-white hover:bg-navy-dark">
+                    Lihat paket Organisasi
+                  </Link>
+                </CardBody>
+              </Card>
+            ) : (
+              <CreateProjectForm
+                organizationId={organization.id}
+                candidates={candidates}
+                currentUserId={user.id}
+              />
+            )}
           </div>
         </section>
       </main>

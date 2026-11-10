@@ -1,7 +1,9 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import { InterestForm } from '@/components/interest/interest-form';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { getCurrentUser } from '@/lib/auth/session';
-import { PLANS, SEAT_PACK } from '@/lib/plans';
+import { ORG_BASE_MEMBERS, PLANS, SEAT_PACK, planPrice, rupiah } from '@/lib/plans';
 import { cn } from '@/lib/utils';
 
 /**
@@ -39,6 +41,7 @@ const FAQ: { q: string; a: string }[] = [
   { q: 'Apakah perlu instal aplikasi?', a: 'Tidak. CampusFlow berjalan di browser, baik di laptop maupun HP.' },
   { q: 'Apakah benar-benar gratis untuk mulai?', a: 'Ya. Paket Gratis cukup untuk mencoba dan kepanitiaan kecil, tanpa kartu pembayaran.' },
   { q: 'Bagaimana kalau anggota kami bertambah sedikit?', a: `Di paket Organisasi kamu cukup menambah kuota per ${SEAT_PACK} anggota, tidak perlu pindah ke paket yang jauh lebih besar.` },
+  { q: 'Bagaimana cara membayar paket Organisasi?', a: 'Ketua, Wakil Ketua, atau Bendahara memilih kuota di menu Paket & Pembayaran, lalu membayar lewat QRIS. Saat ini pembayaran masih tahap uji coba.' },
   { q: 'Apa yang terjadi saat pergantian pengurus?', a: 'Task, dokumen, dan riwayat aktivitas tetap tersimpan, jadi pengurus berikutnya bisa melanjutkan.' },
 ];
 
@@ -50,12 +53,13 @@ export default async function LandingPage() {
       {/* Navigasi atas */}
       <header className="sticky top-0 z-20 border-b border-line bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link href="/" className="font-heading text-lg font-bold text-navy">CampusFlow</Link>
+          <Link href="/" aria-label="CampusFlow"><Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={156} height={40} priority /></Link>
           <nav className="hidden items-center gap-6 text-sm text-gray-600 md:flex" aria-label="Bagian halaman">
             <a href="#fitur" className="hover:text-ink">Fitur</a>
             <a href="#cara-mulai" className="hover:text-ink">Cara mulai</a>
             <a href="#peran" className="hover:text-ink">Peran</a>
             <a href="#paket" className="hover:text-ink">Paket</a>
+            <a href="#daftar" className="hover:text-ink">Daftar minat</a>
           </nav>
           <div className="flex items-center gap-2">
             {user ? (
@@ -176,8 +180,20 @@ export default async function LandingPage() {
             ))}
           </ul>
           <div className="mx-auto mt-6 max-w-3xl rounded-card border border-line bg-white px-5 py-4 text-sm text-gray-600">
-            <strong className="text-ink">Contoh:</strong> himpunan dengan 38 anggota cukup memakai paket Organisasi (30 anggota) ditambah satu
-            tambahan {SEAT_PACK} anggota, tanpa harus membayar paket Kampus. Saat ini semua fitur bisa dicoba gratis selama masa uji coba.
+            <strong className="text-ink">Contoh:</strong> himpunan dengan 38 anggota cukup memakai paket Organisasi ({ORG_BASE_MEMBERS} anggota)
+            ditambah satu tambahan {SEAT_PACK} anggota: {rupiah(planPrice(1, 'monthly'))}/bulan, atau {rupiah(planPrice(1, 'yearly'))}/tahun jika bayar tahunan.
+            Tidak perlu membayar paket Kampus.
+          </div>
+        </div>
+      </section>
+
+      {/* Interest check */}
+      <section id="daftar" className="scroll-mt-16">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.3fr]">
+          <SectionTitle eyebrow="Pengguna awal" title="Tertarik memakai CampusFlow?" align="left"
+            desc="Tinggalkan kontakmu. Kami kabari saat paket berbayar dibuka, dan organisasi pertama mendapat pendampingan gratis." />
+          <div className="rounded-card border border-line bg-white p-5 sm:p-6">
+            <InterestForm source="web" />
           </div>
         </div>
       </section>

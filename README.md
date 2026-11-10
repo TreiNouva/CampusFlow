@@ -301,3 +301,27 @@ oleh pembuat atau PM/Wakil PM, dan dikirim lewat email (tidak ke pembuatnya send
   telat/error, warna divisi dibuat redup, ikon emoji diganti ikon garis satu warna.
 - **Rencana paket** ada di `lib/plans.ts` (draf, angka bisa diubah di satu tempat): Gratis, Organisasi
   (kuota dasar + tambahan per 10 anggota), Kampus.
+
+## 14. Versi 8: Paket & Pembayaran (demo), Interest Check, Keamanan (migrasi 0005)
+
+**Jalankan `supabase/migrations/0005_billing_interest_security.sql` di SQL Editor Supabase sebelum deploy**,
+lalu tambahkan env `ADMIN_EMAILS` di Vercel (email tim, dipisah koma).
+
+- **Paket** (angka di `lib/plans.ts` dan fungsi SQL `plan_price` harus sama):
+  Gratis 15 anggota & 2 project aktif · Organisasi Rp49.000/bulan untuk 30 anggota, +Rp10.000/bulan per 10 anggota,
+  tahunan = 10× bulanan · Kampus lewat kesepakatan.
+- **Kuota ditegakkan database**: anggota organisasi baru (undangan, tambah manual) dan project aktif baru ditolak saat penuh.
+  Mengubah jabatan anggota lama tidak dihitung. Project yang sudah lewat tanggal selesai tidak dihitung.
+- **Menu Paket & Pembayaran** (`/organizations/[id]/billing`): pilih bulanan/tahunan dan jumlah tambahan anggota,
+  ringkasan harga, layar QRIS dengan **kotak Placeholder**, tombol "Saya sudah bayar" → paket aktif (MODE DEMO,
+  tanpa memotong uang), riwayat pembayaran, kembali ke Gratis. Hanya Ketua, Wakil Ketua, dan Bendahara yang bisa mengubah paket.
+  Saat payment gateway terhubung: ganti kotak placeholder dengan gambar QR dari gateway dan pindahkan pemanggilan
+  `activate_plan_demo` ke webhook pembayaran di server.
+- **Interest check**: form di halaman depan (`#daftar`), **mode booth festival di `/minat`** (form otomatis kosong lagi
+  setelah terkirim), dan "Saya tertarik" paket Kampus di dalam aplikasi. Rekap + unduh CSV di `/admin/interest`
+  (hanya email di `ADMIN_EMAILS`).
+- **Keamanan**: fungsi trigger tidak bisa lagi dipanggil lewat API, `search_path` dikunci. Satu hal yang harus
+  dinyalakan manual: Supabase → Authentication → (Policies/Passwords) → **Leaked password protection**.
+- **Lebih cepat**: skeleton per halaman di dalam menu (menu tidak ikut berkedip), halaman publik tidak lagi
+  memanggil server Auth untuk pengunjung tanpa sesi.
+- **Logo baru**: favicon, ikon iPhone, menu samping, halaman depan, login/daftar (`public/brand/`).

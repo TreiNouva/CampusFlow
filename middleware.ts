@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/api/health', '/auth/callback', '/reset-password'];
+const PUBLIC_PATHS = ['/', '/login', '/register', '/minat', '/api/health', '/auth/callback', '/reset-password'];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
@@ -35,14 +35,18 @@ export async function middleware(request: NextRequest) {
   } catch {
     isLoggedIn = false;
   }
-  if (!isLoggedIn) {
+  const path = request.nextUrl.pathname;
+  const isPublic = PUBLIC_PATHS.includes(path) || path.startsWith('/join/');
+
+  // Fallback getUser() memanggil server Auth (lambat). Pengunjung halaman publik yang tidak punya
+  // cookie sesi tidak perlu dicek ulang — ini mempercepat halaman depan dan /minat saat festival.
+  const hasSessionCookie = request.cookies.getAll().some((c) => c.name.startsWith('sb-') && c.name.includes('auth-token'));
+  if (!isLoggedIn && hasSessionCookie && (!isPublic || path === '/login' || path === '/register')) {
     const {
       data: { user: fallbackUser },
     } = await supabase.auth.getUser();
     isLoggedIn = Boolean(fallbackUser);
   }
-
-  const isPublic = PUBLIC_PATHS.includes(request.nextUrl.pathname) || request.nextUrl.pathname.startsWith('/join/');
 
   if (!isLoggedIn && !isPublic) {
     const loginUrl = new URL('/login', request.url);

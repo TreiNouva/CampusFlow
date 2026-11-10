@@ -466,3 +466,10 @@ body {
 .auth-back:hover {
   background: rgba(255, 255, 255, 0.22);
 }
+
+/* v8: logo di form login/daftar */
+.auth-logo {
+  display: block;
+  height: 36px;
+  width: auto;
+}

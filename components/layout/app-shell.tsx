@@ -10,7 +10,7 @@ import { ShellFrame, type MenuSection, type ProjectHeader } from './shell-frame'
  *  - HP: bar atas dengan tombol menu (hamburger) + bar navigasi bawah untuk menu yang paling sering dipakai.
  * Konten halaman tidak lagi menumpuk tab/menu di atasnya.
  */
-export async function AppShell({ children, project }: { children: React.ReactNode; project?: ProjectContext }) {
+export async function AppShell({ children, project, org }: { children: React.ReactNode; project?: ProjectContext; org?: { id: string; name: string; role: string } }) {
   const user = await requireUser();
   const [profile, { data: orgRows }] = await Promise.all([
     getCurrentProfile(),
@@ -52,6 +52,22 @@ export async function AppShell({ children, project }: { children: React.ReactNod
       subtitle: memberTitle(project.myRole, project.myDivisionName),
     };
     bottomNav = [main[0], main[1], main[2], main[4]];
+  } else if (org) {
+    const base = `/organizations/${org.id}`;
+    sections = [
+      { title: 'Menu', items: [{ href: '/dashboard', label: 'Beranda', icon: 'home', exact: true }] },
+      {
+        title: org.name,
+        items: [
+          { href: base, label: 'Project', icon: 'grid', exact: true },
+          { href: `${base}/members`, label: 'Anggota & Undangan', icon: 'users' },
+          { href: `${base}/billing`, label: 'Paket & Pembayaran', icon: 'wallet' },
+        ],
+      },
+      ...(organizations.length > 1
+        ? [{ title: 'Organisasi lain', items: organizations.filter((o) => o.id !== org.id).map((o) => ({ href: `/organizations/${o.id}`, label: o.name, icon: 'building' as const })) }]
+        : []),
+    ];
   } else {
     sections = [
       { title: 'Menu', items: [{ href: '/dashboard', label: 'Beranda', icon: 'home', exact: true }] },

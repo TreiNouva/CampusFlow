@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState, useTransition } from 'react';
+import Image from 'next/image';
 import { login, register } from '@/actions/auth-actions';
 import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -236,7 +237,7 @@ function LoginForm({
   if (view === 'forgot') {
     return (
       <form key="view-forgot" className="auth-form" onSubmit={handleForgot}>
-        <span className="auth-brand">CampusFlow</span>
+        <Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={140} height={36} className="auth-logo" priority />
         <h1 className="auth-title">Lupa Password?</h1>
         <p className="auth-sub">Masukkan email akunmu. Kami kirim link untuk mengatur ulang password.</p>
 
@@ -277,7 +278,7 @@ function LoginForm({
   return (
     <form key="view-login" className="auth-form" onSubmit={handleLogin}>
       {nextPath && <input type="hidden" name="next" value={nextPath} />}
-      <span className="auth-brand">CampusFlow</span>
+      <Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={140} height={36} className="auth-logo" priority />
       <h1 className="auth-title">Masuk</h1>
       <p className="auth-sub">Gunakan email dan password akunmu.</p>
 
@@ -367,7 +368,7 @@ function RegisterForm({ onBusyChange, onSwitch, nextPath }: FormProps & { nextPa
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
       {nextPath && <input type="hidden" name="next" value={nextPath} />}
-      <span className="auth-brand">CampusFlow</span>
+      <Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={140} height={36} className="auth-logo" priority />
       <h1 className="auth-title">Buat Akun</h1>
       <p className="auth-sub">Gratis untuk organisasi kampus.</p>
 
