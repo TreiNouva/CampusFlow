@@ -325,3 +325,15 @@ lalu tambahkan env `ADMIN_EMAILS` di Vercel (email tim, dipisah koma).
 - **Lebih cepat**: skeleton per halaman di dalam menu (menu tidak ikut berkedip), halaman publik tidak lagi
   memanggil server Auth untuk pengunjung tanpa sesi.
 - **Logo baru**: favicon, ikon iPhone, menu samping, halaman depan, login/daftar (`public/brand/`).
+
+## 15. Versi 8.1: Email tanpa domain sendiri (Gmail SMTP)
+
+Email bawaan Supabase hanya 2 email/jam dan hanya ke anggota tim Supabase; Resend butuh domain sendiri.
+Karena CampusFlow memakai domain gratis Vercel, semua email (konfirmasi akun, reset password, notifikasi)
+dikirim lewat **akun Gmail tim + App Password**:
+
+- Aplikasi: isi env `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER`, `SMTP_PASS` (App Password),
+  `EMAIL_FROM="CampusFlow <alamat gmail yang sama>"`. Jika SMTP_* terisi, Resend tidak dipakai.
+- Supabase Auth: Authentication → Emails → SMTP Settings → isi data yang sama.
+- Template email berbahasa Indonesia: `supabase/email-templates/`.
+- Batas Gmail biasa ±500 email/hari — cukup untuk festival.
