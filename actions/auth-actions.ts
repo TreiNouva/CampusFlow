@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/lib/auth/session';
 import {
@@ -38,7 +39,15 @@ export async function login(formData: FormData): Promise<ActionResult> {
   redirect(safeNextPath(formData.get('next')));
 }
 
-export async function register(formData: FormData): Promise<ActionResult> {
+/** Alamat publik aplikasi untuk link di email (Vercel menaruhnya di header x-forwarded-*). */
+function publicOrigin(): string {
+  const h = headers();
+  const host = h.get('x-forwarded-host') ?? h.get('host');
+  if (host) return `${h.get('x-forwarded-proto') ?? 'https'}://${host}`;
+  return (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+}
+
+export async function register(formData: FormData): Promise<ActionResult<{ needsConfirmation: boolean; email: string }>> {
   const parsed = registerSchema.safeParse({
     fullName: formData.get('fullName'),
     email: formData.get('email'),
@@ -48,20 +57,34 @@ export async function register(formData: FormData): Promise<ActionResult> {
     return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
   }
 
+  const next = safeNextPath(formData.get('next'));
   const supabase = createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName },
+      // Link konfirmasi kembali ke aplikasi ini (bukan localhost), lalu lanjut ke tujuan semula.
+      emailRedirectTo: `${publicOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
   if (error) {
+    if (/rate limit/i.test(error.message)) return { success: false, error: 'Terlalu banyak pendaftaran dalam waktu singkat. Coba lagi beberapa menit lagi.' };
+    if (/already registered/i.test(error.message)) return { success: false, error: 'Email ini sudah terdaftar. Silakan masuk.' };
     return { success: false, error: error.message };
   }
 
-  redirect(safeNextPath(formData.get('next')));
+  // "Confirm email" aktif: belum ada sesi sampai link di email diklik.
+  if (!data.session) {
+    // Email yang sudah terdaftar dikembalikan tanpa identities (Supabase tidak membocorkannya lewat error).
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      return { success: false, error: 'Email ini sudah terdaftar. Silakan masuk atau gunakan Lupa password.' };
+    }
+    return { success: true, data: { needsConfirmation: true, email: parsed.data.email } };
+  }
+
+  redirect(next);
 }
 
 export async function logout(): Promise<void> {

@@ -16,6 +16,11 @@ export default function LoginPage({
 }) {
   // /login?forgot=1 langsung membuka form "Lupa password"; /login?next=/join/<token> kembali ke undangan setelah masuk
   return (
-    <AuthPage initialMode="login" initialForgot={searchParams.forgot === '1'} nextPath={safeNext(searchParams.next)} />
+    <AuthPage
+      initialMode="login"
+      initialForgot={searchParams.forgot === '1'}
+      nextPath={safeNext(searchParams.next)}
+      notice={searchParams.confirm === 'failed' ? 'Link konfirmasi sudah kedaluwarsa atau sudah dipakai. Coba masuk; kalau belum bisa, daftar ulang untuk menerima link baru.' : undefined}
+    />
   );
 }

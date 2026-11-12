@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /** Hanya halaman ini yang boleh jadi tujuan setelah link email diverifikasi (mencegah open redirect). */
 const ALLOWED_NEXT = ['/reset-password', '/dashboard'];
+const isAllowedNext = (p: string) => ALLOWED_NEXT.includes(p) || /^\/join\/[A-Za-z0-9]{20,100}$/.test(p);
 
 /**
  * Tujuan link di email Supabase (reset password). Mendukung dua format link:
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get('token_hash');
   const type = searchParams.get('type') as EmailOtpType | null;
   const nextParam = searchParams.get('next') ?? '/reset-password';
-  const next = ALLOWED_NEXT.includes(nextParam) ? nextParam : '/reset-password';
+  const next = isAllowedNext(nextParam) ? nextParam : '/reset-password';
 
   const supabase = createClient();
   let verified = false;
@@ -36,5 +37,7 @@ export async function GET(request: NextRequest) {
   const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
   const base = forwardedHost ? `${forwardedProto}://${forwardedHost}` : origin;
 
-  return NextResponse.redirect(`${base}${verified ? next : '/reset-password?error=invalid'}`);
+  // Gagal: link reset kembali ke form reset; link konfirmasi pendaftaran ke halaman masuk dengan pesan.
+  const failure = next === '/reset-password' ? '/reset-password?error=invalid' : '/login?confirm=failed';
+  return NextResponse.redirect(`${base}${verified ? next : failure}`);
 }
