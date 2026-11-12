@@ -8,7 +8,9 @@ import { getCurrentUser } from '@/lib/auth/session';
 export async function isTeamAdmin(): Promise<boolean> {
   const user = await getCurrentUser();
   const email = user?.email?.toLowerCase();
-  if (!email) return false;
+  // Wajib email terverifikasi: tanpa ini, orang lain bisa mendaftar memakai email tim
+  // (saat "Confirm email" mati) lalu ikut membuka rekap.
+  if (!email || !(user as any)?.email_confirmed_at) return false;
   const allowed = (process.env.ADMIN_EMAILS ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
