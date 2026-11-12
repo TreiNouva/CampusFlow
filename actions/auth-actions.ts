@@ -81,7 +81,11 @@ export async function register(formData: FormData): Promise<ActionResult<{ needs
     if (data.user && (data.user.identities?.length ?? 0) === 0) {
       return { success: false, error: 'Email ini sudah terdaftar. Silakan masuk atau gunakan Lupa password.' };
     }
-    return { success: true, data: { needsConfirmation: true, email: parsed.data.email } };
+    // Pindah ke halaman masuk dengan pesan "cek email". Dilakukan lewat redirect (bukan state di form)
+    // karena Supabase menyimpan cookie verifikasi saat signUp, yang membuat form dimuat ulang.
+    const params = new URLSearchParams({ registered: '1', email: parsed.data.email });
+    if (next !== '/dashboard') params.set('next', next);
+    redirect(`/login?${params.toString()}`);
   }
 
   redirect(next);

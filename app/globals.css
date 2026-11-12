@@ -473,3 +473,17 @@ body {
   height: 36px;
   width: auto;
 }
+
+/* v8.1.3: pesan info di form masuk (mis. "cek email konfirmasi") */
+.auth-notice {
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #c9d7e5;
+  border-radius: 8px;
+  background: #e8eff5;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #12365e;
+  text-align: left;
+}

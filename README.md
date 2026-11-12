@@ -337,3 +337,12 @@ dikirim lewat **akun Gmail tim + App Password**:
 - Supabase Auth: Authentication → Emails → SMTP Settings → isi data yang sama.
 - Template email berbahasa Indonesia: `supabase/email-templates/`.
 - Batas Gmail biasa ±500 email/hari — cukup untuk festival.
+
+## 16. Versi 8.1.3: Konfirmasi email yang bisa dibuka di perangkat mana saja
+
+- Setelah daftar (saat "Confirm email" menyala), user diarahkan ke halaman masuk dengan pesan "cek email".
+- **Template email wajib diganti** (Supabase → Authentication → Emails → Templates) dengan isi
+  `supabase/email-templates/confirm-signup.html` dan `reset-password.html`. Link di template ini memakai
+  `token_hash`, sehingga bisa dibuka di HP/aplikasi email mana pun (link bawaan `{{ .ConfirmationURL }}`
+  hanya berhasil jika dibuka di browser yang sama dengan saat mendaftar).
+- Redirect URLs Supabase harus memuat `https://campus-flow-sepia.vercel.app/**`.

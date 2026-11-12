@@ -35,8 +35,8 @@ export function AuthPage({
   notice,
 }: {
   initialMode: Mode;
-  /** Pesan di atas form masuk, mis. saat link konfirmasi email kedaluwarsa. */
-  notice?: string;
+  /** Pesan di form masuk: info (mis. "cek email konfirmasi") atau error (mis. link kedaluwarsa). */
+  notice?: { tone: 'info' | 'error'; text: string };
   /** Halaman tujuan setelah masuk/daftar (hanya /join/<token>, dari halaman undangan). */
   nextPath?: string;
   /** Buka langsung form "Lupa password" (dari /login?forgot=1). */
@@ -117,7 +117,7 @@ function LoginForm({
   initialView = 'login',
   nextPath,
   notice,
-}: FormProps & { initialView?: LoginView; nextPath?: string; notice?: string }) {
+}: FormProps & { initialView?: LoginView; nextPath?: string; notice?: { tone: 'info' | 'error'; text: string } }) {
   const [view, setView] = useState<LoginView>(initialView);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -321,8 +321,8 @@ function LoginForm({
       </button>
 
       {notice && !error && (
-        <p role="status" className="auth-error">
-          {notice}
+        <p role="status" className={notice.tone === 'info' ? 'auth-notice' : 'auth-error'}>
+          {notice.text}
         </p>
       )}
 
@@ -349,7 +349,6 @@ function LoginForm({
 function RegisterForm({ onBusyChange, onSwitch, nextPath }: FormProps & { nextPath?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [sentTo, setSentTo] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -366,10 +365,6 @@ function RegisterForm({ onBusyChange, onSwitch, nextPath }: FormProps & { nextPa
           setError(result.error ?? 'Gagal mendaftar.');
           setBusy(false);
           onBusyChange(null);
-        } else if (result?.data?.needsConfirmation) {
-          setSentTo(result.data.email);
-          setBusy(false);
-          onBusyChange(null);
         }
         // Sukses: server mengarahkan ke /dashboard. Overlay tetap tampil sampai halaman berpindah.
       } catch (err) {
@@ -379,22 +374,6 @@ function RegisterForm({ onBusyChange, onSwitch, nextPath }: FormProps & { nextPa
         onBusyChange(null);
       }
     });
-  }
-
-  if (sentTo) {
-    return (
-      <div className="auth-form" role="status">
-        <Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={140} height={36} className="auth-logo" priority />
-        <h1 className="auth-title">Cek email kamu</h1>
-        <p className="auth-sub">
-          Kami mengirim link konfirmasi ke <b>{sentTo}</b>. Klik link itu untuk mengaktifkan akun, lalu kamu langsung masuk.
-          Tidak ada di inbox? Cek folder <b>Spam</b> atau <b>Promosi</b>.
-        </p>
-        <button type="button" className="auth-btn" onClick={() => { setSentTo(null); onSwitch(); }}>
-          Ke halaman masuk
-        </button>
-      </div>
-    );
   }
 
   return (
