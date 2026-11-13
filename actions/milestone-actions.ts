@@ -13,7 +13,7 @@ export async function createMilestone(formData: FormData): Promise<ActionResult>
   const parsed = milestoneSchema.safeParse({
     projectId: formData.get('projectId'), title: formData.get('title'), dueDate: formData.get('dueDate'),
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const periodError = await checkProjectPeriod(parsed.data.projectId, [[parsed.data.dueDate, 'Tanggal milestone']]);
   if (periodError) return { success: false, error: periodError };
   const { error } = await createClient().from('project_milestones').insert({

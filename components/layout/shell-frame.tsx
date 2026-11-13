@@ -97,11 +97,13 @@ export function ShellFrame({
           <Icon name="help" size={18} className="text-gray-400" /> Panduan singkat
         </button>
         <div className="mt-2 flex items-center gap-2.5 px-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">{initials(user.name)}</span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-ink">{user.name}</p>
-            <p className="truncate text-xs text-muted">{user.email}</p>
-          </div>
+          <Link href="/akun" onClick={() => setDrawer(false)} title="Akun saya" className="-mx-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-gray-50">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">{initials(user.name)}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-ink">{user.name}</span>
+              <span className="block truncate text-xs text-muted">{user.email}</span>
+            </span>
+          </Link>
           <form action={logout}>
             <button type="submit" className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-ink" aria-label="Keluar" title="Keluar">
               <Icon name="logout" size={18} />
@@ -126,7 +128,7 @@ export function ShellFrame({
           <p className="truncate text-sm font-semibold text-ink">{header?.title ?? 'CampusFlow'}</p>
           {current && <p className="truncate text-xs text-muted">{current.label}</p>}
         </div>
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">{initials(user.name)}</span>
+        <Link href="/akun" aria-label="Akun saya" className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">{initials(user.name)}</Link>
       </header>
 
       {/* Drawer HP */}

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -9,7 +10,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
-      <body className="font-body min-h-screen antialiased">{children}</body>
+      <body className="font-body min-h-screen antialiased">
+        {children}
+        {/* Statistik kunjungan anonim tanpa cookie (aktifkan "Analytics" di dashboard Vercel). */}
+        <Analytics />
+      </body>
     </html>
   );
 }

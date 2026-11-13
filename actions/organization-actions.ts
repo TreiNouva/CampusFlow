@@ -21,7 +21,7 @@ export async function createOrganization(formData: FormData): Promise<ActionResu
     description: formData.get('description') || undefined,
   });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
   const supabase = createClient();

@@ -35,6 +35,9 @@ export default function InterestKioskPage() {
           <h2 className="font-heading text-xl font-bold text-ink">Daftar jadi pengguna awal</h2>
           <p className="mb-5 mt-1 text-sm text-muted">Kurang dari 1 menit.</p>
           <InterestForm source="festival" kiosk />
+          <p className="mt-4 text-center text-xs text-muted">
+            <Link href="/privasi" target="_blank" className="underline underline-offset-2">Kebijakan Privasi</Link>
+          </p>
         </div>
       </div>
     </div>

@@ -23,7 +23,7 @@ export async function login(formData: FormData): Promise<ActionResult> {
     password: formData.get('password'),
   });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
   const supabase = createClient();
@@ -43,8 +43,8 @@ export async function login(formData: FormData): Promise<ActionResult> {
 }
 
 /** Alamat publik aplikasi untuk link di email (Vercel menaruhnya di header x-forwarded-*). */
-function publicOrigin(): string {
-  const h = headers();
+async function publicOrigin(): Promise<string> {
+  const h = await headers();
   const host = h.get('x-forwarded-host') ?? h.get('host');
   if (host) return `${h.get('x-forwarded-proto') ?? 'https'}://${host}`;
   return (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
@@ -57,7 +57,7 @@ export async function register(formData: FormData): Promise<ActionResult<{ needs
     password: formData.get('password'),
   });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
   const next = safeNextPath(formData.get('next'));
@@ -68,7 +68,7 @@ export async function register(formData: FormData): Promise<ActionResult<{ needs
     options: {
       data: { full_name: parsed.data.fullName },
       // Link konfirmasi kembali ke aplikasi ini (bukan localhost), lalu lanjut ke tujuan semula.
-      emailRedirectTo: `${publicOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${await publicOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
@@ -107,7 +107,7 @@ export async function updatePassword(formData: FormData): Promise<ActionResult> 
     confirmPassword: formData.get('confirmPassword'),
   });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
   const user = await getCurrentUser();

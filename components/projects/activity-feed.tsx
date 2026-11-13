@@ -9,6 +9,7 @@ const ACTION_LABEL: Record<string, string> = {
   task_priority_changed: 'mengubah priority task',
   task_commented: 'berkomentar pada task',
   project_created: 'membuat project ini',
+  project_updated: 'mengubah info project',
   project_announcement: 'membuat pengumuman',
   announcement_updated: 'memperbarui pengumuman',
   member_added: 'menambahkan anggota',
@@ -37,7 +38,7 @@ export function ActivityFeed({ activity }: { activity: ActivityLog[] }) {
                   {' '}
                   — <span className="font-medium">{log.task.title}</span>
                 </>
-              ) : !log.task_id && log.new_value && log.action_type !== 'project_created' ? (
+              ) : !log.task_id && log.new_value && log.action_type !== 'project_created' && log.action_type !== 'project_updated' ? (
                 <>
                   {' '}
                   — <span className="font-medium">{log.new_value}</span>

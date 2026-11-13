@@ -12,11 +12,12 @@ const LOG_STATUS_COLOR: Record<string, string> = {
   pending: 'bg-gray-100 text-gray-600',
 };
 
-export default async function NotificationSettingsPage({
-  params,
-}: {
-  params: { projectId: string };
-}) {
+export default async function NotificationSettingsPage(
+  props: {
+    params: Promise<{ projectId: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await requireUser();
   const supabase = createClient();
 

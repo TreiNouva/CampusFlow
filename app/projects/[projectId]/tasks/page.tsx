@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import { todayJakarta } from '@/lib/dates';
 import type { ProjectRole } from '@/types/database';
 
-export default async function TaskBoardPage({ params }: { params: { projectId: string } }) {
+export default async function TaskBoardPage(props: { params: Promise<{ projectId: string }> }) {
+  const params = await props.params;
   const user = await requireUser();
   const supabase = createClient();
   const today = todayJakarta();

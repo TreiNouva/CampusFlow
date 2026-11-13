@@ -436,6 +436,9 @@ function RegisterForm({ onBusyChange, onSwitch, nextPath }: FormProps & { nextPa
       <button type="submit" className="auth-btn" disabled={busy}>
         {busy ? 'Memproses...' : 'Daftar'}
       </button>
+      <p className="auth-legal">
+        Dengan mendaftar, kamu menyetujui <a href="/privasi" target="_blank" rel="noopener">Kebijakan Privasi</a> CampusFlow.
+      </p>
 
       <p className="auth-mobile-switch">
         Sudah punya akun?{' '}

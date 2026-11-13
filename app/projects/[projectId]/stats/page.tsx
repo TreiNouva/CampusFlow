@@ -15,7 +15,8 @@ import { calcProgress, formatRupiah } from '@/lib/utils';
 import type { TaskStatus } from '@/types/database';
 
 /** Statistik & aktivitas project — grafik dipisah dari Ringkasan supaya halaman utama tidak penuh. */
-export default async function ProjectStatsPage({ params }: { params: { projectId: string } }) {
+export default async function ProjectStatsPage(props: { params: Promise<{ projectId: string }> }) {
+  const params = await props.params;
   const { project, myRole } = await getProjectContext(params.projectId);
   const supabase = createClient();
   const today = todayJakarta();

@@ -5,6 +5,10 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/session';
 import { rpcErrorMessage } from '@/lib/rpc';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getCurrentUser } from '@/lib/auth/session';
+import { headers } from 'next/headers';
+import { createHash } from 'crypto';
 import { MAX_SEAT_PACKS } from '@/lib/plans';
 
 type Result<T = undefined> = { success: true; data?: T } | { success: false; error: string };
@@ -57,13 +61,38 @@ const interestSchema = z.object({
   organizationId: z.string().uuid().optional().or(z.literal('')).default(''),
 });
 
-/** Interest check: bisa dipakai tanpa login (halaman depan & mode booth festival). */
+/** Hash IP (dengan salt) — dipakai hanya untuk membatasi spam per perangkat, IP asli tidak disimpan. */
+async function clientIpHash(): Promise<string | null> {
+  const h = await headers();
+  const ip = (h.get('x-forwarded-for') ?? '').split(',')[0].trim() || h.get('x-real-ip') || '';
+  if (!ip) return null;
+  const salt = process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-16) ?? 'campusflow';
+  return createHash('sha256').update(`${salt}:${ip}`).digest('hex').slice(0, 32);
+}
+
+/**
+ * Interest check: bisa dipakai tanpa login (halaman depan & mode booth festival).
+ * Anti-spam: (1) kolom jebakan `website` yang tak terlihat manusia, (2) form harus terbuka ≥2 detik,
+ * (3) persetujuan privasi wajib, (4) batas isian per perangkat di database. Fungsi database hanya bisa
+ * dipanggil server (service role), jadi bot tidak bisa melewati pemeriksaan ini lewat API Supabase.
+ */
 export async function submitInterest(formData: FormData): Promise<Result> {
   const raw = Object.fromEntries(formData.entries());
+  if (typeof raw.website === 'string' && raw.website.trim() !== '') return { success: true }; // bot: pura-pura berhasil
+  const startedAt = Number(raw.startedAt ?? 0);
+  if (!startedAt || Date.now() - startedAt < 2000) return { success: false, error: 'Terlalu cepat. Periksa lagi isianmu, lalu kirim.' };
+  if (raw.consent !== 'on') return { success: false, error: 'Centang persetujuan Kebijakan Privasi terlebih dahulu.' };
+
   const parsed = interestSchema.safeParse({ ...raw, memberCount: raw.memberCount ? raw.memberCount : null });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Data tidak valid.' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Data tidak valid.' };
   const d = parsed.data;
-  const { error } = await createClient().rpc('submit_interest', {
+  const user = await getCurrentUser();
+
+  let admin;
+  try { admin = createAdminClient(); } catch {
+    return { success: false, error: 'Server belum dikonfigurasi (SUPABASE_SERVICE_ROLE_KEY).' };
+  }
+  const { error } = await admin.rpc('submit_interest', {
     p_name: d.name,
     p_email: d.email,
     p_org_name: d.organizationName,
@@ -74,6 +103,8 @@ export async function submitInterest(formData: FormData): Promise<Result> {
     p_note: d.willingToPay === 'mungkin' ? `[mungkin mau bayar] ${d.note}`.trim() : d.note,
     p_source: d.source,
     p_org: d.organizationId || null,
+    p_user: user?.id ?? null,
+    p_ip_hash: await clientIpHash(),
   });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menyimpan. Coba lagi sebentar lagi.') };
   return { success: true };

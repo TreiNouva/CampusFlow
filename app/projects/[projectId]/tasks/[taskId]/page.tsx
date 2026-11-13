@@ -13,7 +13,8 @@ import { formatDate, formatDateTime, PRIORITY_COLOR, PRIORITY_LABEL, STATUS_COLO
 import { isProjectManagerRole } from '@/lib/roles';
 import type { ActivityLog, ProjectRole, TaskPriority, TaskStatus } from '@/types/database';
 
-export default async function TaskDetailPage({ params }: { params: { projectId: string; taskId: string } }) {
+export default async function TaskDetailPage(props: { params: Promise<{ projectId: string; taskId: string }> }) {
+  const params = await props.params;
   const user = await requireUser();
   const supabase = createClient();
 

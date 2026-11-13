@@ -93,7 +93,7 @@ export async function createAnnouncement(formData: FormData): Promise<ActionResu
     body: formData.get('body'),
     divisionId: formData.get('divisionId') || null,
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const divisionId = parsed.data.divisionId ?? null;
 
   const { data: announcement, error } = await createClient()
@@ -145,7 +145,7 @@ export async function updateAnnouncement(formData: FormData): Promise<ActionResu
     body: formData.get('body'),
     resend: formData.get('resend') === 'on',
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
   const { data, error } = await createClient()
     .from('announcements')

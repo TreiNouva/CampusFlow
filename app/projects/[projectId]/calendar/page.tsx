@@ -7,7 +7,8 @@ import { getProjectContext } from '@/lib/project-context';
 import { buildParticipants } from '@/lib/event-participants';
 import { todayJakarta } from '@/lib/dates';
 
-export default async function ProjectCalendarPage({ params }: { params: { projectId: string } }) {
+export default async function ProjectCalendarPage(props: { params: Promise<{ projectId: string }> }) {
+  const params = await props.params;
   const { project, myRole, myDivisionId, userId } = await getProjectContext(params.projectId);
   const supabase = createClient();
   const today = todayJakarta();

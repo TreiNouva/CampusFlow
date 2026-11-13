@@ -30,6 +30,7 @@ const EVENT_IMPORTANCE: Record<ActivityAction, 'all' | 'important'> = {
   task_priority_changed: 'all',
   task_commented: 'all',
   project_created: 'important',
+  project_updated: 'all',
   project_announcement: 'important',
   announcement_updated: 'all',
   member_added: 'all',
@@ -156,7 +157,7 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
     divisionId: formData.get('divisionId') || undefined,
   });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
   if (parsed.data.startDate && parsed.data.dueDate && parsed.data.startDate > parsed.data.dueDate) {
     return { success: false, error: 'Tanggal mulai tidak boleh setelah deadline.' };
@@ -272,7 +273,7 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
     divisionId: optionalField(formData.get('divisionId')),
   });
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
   const supabase = createClient();

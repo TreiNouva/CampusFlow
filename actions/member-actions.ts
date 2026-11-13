@@ -21,8 +21,8 @@ import type { ActionResult } from './organization-actions';
  * Action di sini hanya memvalidasi input dan menerjemahkan hasilnya.
  */
 
-const firstError = (parsed: { error: { errors: { message: string }[] } }) =>
-  parsed.error.errors[0]?.message ?? 'Input tidak valid';
+const firstError = (parsed: { error: { issues: { message: string }[] } }) =>
+  parsed.error.issues[0]?.message ?? 'Input tidak valid';
 
 /** Cari id user berdasarkan email (hanya user yang sudah terdaftar di CampusFlow). */
 async function findUserIdByEmail(email: string): Promise<string | null> {

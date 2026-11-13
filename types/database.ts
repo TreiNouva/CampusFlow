@@ -28,6 +28,7 @@ export type ActivityAction =
   | 'task_priority_changed'
   | 'task_commented'
   | 'project_created'
+  | 'project_updated'
   | 'project_announcement'
   | 'announcement_updated'
   | 'member_added'

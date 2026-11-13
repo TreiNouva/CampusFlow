@@ -17,6 +17,10 @@ export interface ProjectContext {
   myRole: ProjectRole;
   myDivisionId: string | null;
   myDivisionName: string | null;
+  /** Boleh mengubah info/periode project: PM, Wakil PM, atau Ketua/Wakil Ketua organisasi. */
+  canManage: boolean;
+  /** Boleh menghapus project: PM atau Ketua organisasi. */
+  canDelete: boolean;
 }
 
 /**
@@ -31,7 +35,15 @@ export const getProjectContext = cache(async (projectId: string): Promise<Projec
     supabase.from('project_members').select('role, division_id, division:project_divisions(name)').eq('project_id', projectId).eq('user_id', user.id).maybeSingle(),
   ]);
   if (!project || !membership) notFound();
+  const orgId = (project as any).organization?.id as string | undefined;
+  const { data: orgMember } = orgId
+    ? await supabase.from('organization_members').select('role').eq('organization_id', orgId).eq('user_id', user.id).maybeSingle()
+    : { data: null };
+  const role = membership.role as ProjectRole;
+  const orgRole = (orgMember as any)?.role as string | undefined;
   return {
+    canManage: role === 'project_manager' || role === 'wakil_project_manager' || orgRole === 'ketua' || orgRole === 'wakil_ketua',
+    canDelete: role === 'project_manager' || orgRole === 'ketua',
     userId: user.id,
     project: project as unknown as ProjectContext['project'],
     myRole: membership.role as ProjectRole,

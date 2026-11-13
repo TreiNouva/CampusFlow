@@ -9,10 +9,11 @@ function safeNext(value: string | string[] | undefined): string | undefined {
   return v && /^\/join\/[A-Za-z0-9]{20,100}$/.test(v) ? v : undefined;
 }
 
-export default function RegisterPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function RegisterPage(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   return <AuthPage initialMode="register" nextPath={safeNext(searchParams.next)} />;
 }

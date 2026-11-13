@@ -42,6 +42,7 @@ export async function AppShell({ children, project, org }: { children: React.Rea
       { href: `${base}/members`, label: 'Anggota & Divisi', icon: 'users' },
       { href: `${base}/stats`, label: 'Statistik', icon: 'chart' },
       { href: `${base}/settings/notifications`, label: 'Notifikasi Email', icon: 'bell' },
+      ...(project.canManage ? [{ href: `${base}/settings`, label: 'Pengaturan Project', icon: 'gear' as const, exact: true }] : []),
     ];
     sections = [
       { title: 'Project', items: main },
@@ -64,6 +65,7 @@ export async function AppShell({ children, project, org }: { children: React.Rea
           { href: base, label: 'Project', icon: 'grid', exact: true },
           { href: `${base}/members`, label: 'Anggota & Undangan', icon: 'users' },
           { href: `${base}/billing`, label: 'Paket & Pembayaran', icon: 'wallet' },
+          { href: `${base}/settings`, label: 'Pengaturan', icon: 'gear' },
         ],
       },
       ...(organizations.length > 1

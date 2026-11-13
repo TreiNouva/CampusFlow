@@ -487,3 +487,16 @@ body {
   color: #12365e;
   text-align: left;
 }
+.auth-legal {
+  margin: 10px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #6b7280;
+  text-align: center;
+}
+.auth-legal a {
+  color: #12365e;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

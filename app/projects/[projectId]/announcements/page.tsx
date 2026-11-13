@@ -7,7 +7,8 @@ import { getProjectContext } from '@/lib/project-context';
 import { canManageAnyScope, canPostAnnouncementRole, isProjectManagerRole } from '@/lib/roles';
 import type { Announcement } from '@/types/database';
 
-export default async function AnnouncementsPage({ params }: { params: { projectId: string } }) {
+export default async function AnnouncementsPage(props: { params: Promise<{ projectId: string }> }) {
+  const params = await props.params;
   const { project, myRole, myDivisionId, userId } = await getProjectContext(params.projectId);
   const supabase = createClient();
   const [{ data: announcements }, { data: divisions }] = await Promise.all([

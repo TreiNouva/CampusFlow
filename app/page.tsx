@@ -229,7 +229,8 @@ export default async function LandingPage() {
         </div>
       </section>
       <footer className="border-t border-line py-6 text-center text-xs text-muted">
-        © 2026 CampusFlow · Kelompok 5 Venture Creation, BINUS University
+        © 2026 CampusFlow · Kelompok 5 Venture Creation, BINUS University ·{' '}
+        <Link href="/privasi" className="underline-offset-2 hover:underline">Kebijakan Privasi</Link>
       </footer>
     </div>
   );

@@ -15,7 +15,8 @@ import { calcProgress, formatDate } from '@/lib/utils';
  * hal yang perlu perhatian, dan pengumuman terbaru. Kalender, grafik, dan aktivitas dipindah
  * ke halaman masing-masing (menu Kalender & Statistik) supaya halaman ini tidak "penuh".
  */
-export default async function ProjectOverviewPage({ params }: { params: { projectId: string } }) {
+export default async function ProjectOverviewPage(props: { params: Promise<{ projectId: string }> }) {
+  const params = await props.params;
   const ctx = await getProjectContext(params.projectId);
   const { project, myRole, userId } = ctx;
   const supabase = createClient();

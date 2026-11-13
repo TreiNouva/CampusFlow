@@ -26,11 +26,12 @@ function noticeFor(sp: { [key: string]: string | string[] | undefined }) {
   return undefined;
 }
 
-export default function LoginPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function LoginPage(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   // /login?forgot=1 langsung membuka form "Lupa password"; /login?next=/join/<token> kembali ke undangan setelah masuk
   return (
     <AuthPage

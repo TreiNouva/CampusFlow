@@ -346,3 +346,22 @@ dikirim lewat **akun Gmail tim + App Password**:
   `token_hash`, sehingga bisa dibuka di HP/aplikasi email mana pun (link bawaan `{{ .ConfirmationURL }}`
   hanya berhasil jika dibuka di browser yang sama dengan saat mendaftar).
 - Redirect URLs Supabase harus memuat `https://campus-flow-sepia.vercel.app/**`.
+
+## 17. Versi 8.2: Kelola Akun/Project/Organisasi, Anti-spam, Privasi, Next.js 15 (migrasi 0006)
+
+**Baru**
+- **Akun saya** (`/akun`, klik nama/avatar): ganti nama dan password (password lama diverifikasi dulu).
+- **Pengaturan Project** (PM, Wakil PM, Ketua/Wakil Ketua organisasi): ubah nama, deskripsi, periode. Periode ditolak jika masih ada task/acara/milestone di luar periode baru. Hapus project (PM atau Ketua organisasi) dengan mengetik nama project.
+- **Pengaturan Organisasi**: ubah info (Ketua/Wakil), hapus (Ketua), keluar dari organisasi (selain Ketua).
+- **Form minat**: centang persetujuan + link Kebijakan Privasi, kolom jebakan bot, minimal 2 detik, maks. 8 kiriman/10 menit per IP (IP disimpan sebagai hash). Fungsi `submit_interest` sekarang hanya bisa dipanggil server.
+- **Kebijakan Privasi** (`/privasi`) mengacu UU No. 27/2022 (PDP).
+- Halaman 404 dan halaman error yang ramah.
+- **Vercel Analytics** (kunjungan halaman + event `interest_submitted`).
+- **Keamanan/performa**: Next.js 15.5 + React 19 (menutup CVE kritis Next 14), kebijakan RLS memakai `(select auth.uid())`, index untuk semua foreign key.
+
+**Urutan deploy (penting)**
+1. Push kode v8.2 ke GitHub, tunggu Vercel selesai build (status Ready).
+2. Pastikan `SUPABASE_SERVICE_ROLE_KEY` ada di Environment Variables Vercel (dipakai form minat).
+3. Baru jalankan `supabase/migrations/0006_manage_perf_interest.sql` di Supabase → SQL Editor.
+   (Kalau 0006 dijalankan duluan, form minat versi lama akan error karena fungsi lamanya dikunci.)
+4. Vercel → project → tab **Analytics** → Enable.

@@ -15,7 +15,7 @@ export async function createDivision(formData: FormData): Promise<ActionResult> 
     name: formData.get('name'),
     color: formData.get('color') || undefined,
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
   const supabase = createClient();
   let color = parsed.data.color && DIVISION_PALETTE.some((c) => c.key === parsed.data.color) ? parsed.data.color : null;
@@ -46,7 +46,7 @@ export async function deleteDivision(formData: FormData): Promise<ActionResult> 
     projectId: formData.get('projectId'),
     divisionId: formData.get('divisionId'),
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
   const { data, error } = await createClient()
     .from('project_divisions')

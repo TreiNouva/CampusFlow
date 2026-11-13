@@ -39,7 +39,7 @@ function readEvent(formData: FormData) {
 export async function createEvent(formData: FormData): Promise<ActionResult> {
   const user = await requireUser();
   const parsed = eventSchema.safeParse(readEvent(formData));
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const times = buildTimes(parsed.data);
   if (times.end_at < times.start_at) return { success: false, error: 'Waktu selesai tidak boleh sebelum waktu mulai.' };
   const periodError = await checkProjectPeriod(String(parsed.data.projectId), [
@@ -77,7 +77,7 @@ export async function createEvent(formData: FormData): Promise<ActionResult> {
 export async function updateEvent(formData: FormData): Promise<ActionResult> {
   await requireUser();
   const parsed = updateEventSchema.safeParse(readEvent(formData));
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const times = buildTimes(parsed.data);
   if (times.end_at < times.start_at) return { success: false, error: 'Waktu selesai tidak boleh sebelum waktu mulai.' };
   const periodError = await checkProjectPeriod(String(parsed.data.projectId), [

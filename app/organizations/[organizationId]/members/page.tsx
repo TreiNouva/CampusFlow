@@ -11,11 +11,12 @@ import { createClient } from '@/lib/supabase/server';
 import { canInviteToOrg, isOrgManagerRole, ORG_ROLES } from '@/lib/roles';
 import type { Invite, OrgRole } from '@/types/database';
 
-export default async function OrganizationMembersPage({
-  params,
-}: {
-  params: { organizationId: string };
-}) {
+export default async function OrganizationMembersPage(
+  props: {
+    params: Promise<{ organizationId: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await requireUser();
   const supabase = createClient();
 

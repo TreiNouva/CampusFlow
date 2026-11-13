@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition, type FormEvent } from 'react';
 import { submitInterest } from '@/actions/billing-actions';
+import { track } from '@vercel/analytics';
 import { Input, Label, Select, Textarea } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,8 @@ export function InterestForm({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
+  // Waktu form mulai tampil (anti-bot: form yang dikirim <2 detik setelah tampil ditolak).
+  const [startedAt, setStartedAt] = useState(() => Date.now());
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,8 +45,9 @@ export function InterestForm({
       const res = await submitInterest(fd);
       if (!res.success) { setError(res.error); return; }
       setDone(true);
+      try { track('interest_submitted', { source, plan }); } catch { /* analytics opsional */ }
       if (kiosk) {
-        setTimeout(() => { formRef.current?.reset(); setPlan(defaultPlan); setDone(false); }, 4000);
+        setTimeout(() => { formRef.current?.reset(); setPlan(defaultPlan); setStartedAt(Date.now()); setDone(false); }, 4000);
       }
     });
   }
@@ -66,6 +70,11 @@ export function InterestForm({
   const big = kiosk ? 'py-3 text-base' : '';
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4" noValidate>
+      <input type="hidden" name="startedAt" value={startedAt} />
+      {/* Kolom jebakan bot: tidak terlihat dan tidak bisa difokus oleh manusia */}
+      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label>Website<input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" /></label>
+      </div>
       <div className={cn('grid grid-cols-1 gap-4', !compact && 'sm:grid-cols-2')}>
         <div>
           <Label htmlFor={`i-name-${source}`}>Nama</Label>
@@ -131,12 +140,18 @@ export function InterestForm({
         </div>
       )}
 
+      <label className="flex items-start gap-2.5 text-sm text-gray-700">
+        <input type="checkbox" name="consent" required className="mt-0.5 h-4 w-4 shrink-0 accent-[#12365E]" />
+        <span>
+          Saya setuju data ini disimpan tim CampusFlow untuk menghubungi saya, sesuai{' '}
+          <a href="/privasi" target="_blank" rel="noopener" className="font-semibold text-navy underline underline-offset-2">Kebijakan Privasi</a>.
+        </span>
+      </label>
       {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
       <button type="submit" disabled={pending}
         className={cn('w-full rounded-lg bg-navy font-semibold text-white hover:bg-navy-dark disabled:opacity-50', kiosk ? 'py-4 text-lg' : 'py-2.5 text-sm')}>
         {pending ? 'Menyimpan…' : 'Kirim'}
       </button>
-      <p className="text-xs text-muted">Data hanya dipakai tim CampusFlow untuk menghubungimu soal peluncuran.</p>
     </form>
   );
 }

@@ -10,7 +10,11 @@ import { canUploadProjectDocument, isProjectManagerRole } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import type { DocumentCategory, ProjectRole } from '@/types/database';
 
-export default async function DocumentsPage({ params, searchParams }: { params: { projectId: string }; searchParams: { kategori?: string } }) {
+export default async function DocumentsPage(
+  props: { params: Promise<{ projectId: string }>; searchParams: Promise<{ kategori?: string }> }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const user = await requireUser();
   const supabase = createClient();
   const pid = params.projectId;

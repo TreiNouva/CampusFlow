@@ -15,7 +15,7 @@ export async function saveBudgetPlan(formData: FormData): Promise<ActionResult> 
     projectId: formData.get('projectId'), divisionId: formData.get('divisionId') || null,
     category: formData.get('category'), plannedAmount: formData.get('plannedAmount'),
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const { error } = await createClient().from('budget_plans').insert({
     project_id: parsed.data.projectId, division_id: parsed.data.divisionId ?? null,
     category: parsed.data.category, planned_amount: parsed.data.plannedAmount, created_by: user.id,
@@ -46,7 +46,7 @@ export async function addBudgetEntry(formData: FormData): Promise<ActionResult> 
     entryType: formData.get('entryType'), category: formData.get('category'), amount: formData.get('amount'),
     note: formData.get('note') || null, entryDate: formData.get('entryDate'),
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const { error } = await createClient().from('budget_entries').insert({
     project_id: parsed.data.projectId, division_id: parsed.data.divisionId ?? null,
     entry_type: parsed.data.entryType, category: parsed.data.category, amount: parsed.data.amount,

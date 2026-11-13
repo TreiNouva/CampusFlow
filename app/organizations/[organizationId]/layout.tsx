@@ -3,7 +3,15 @@ import { AppShell } from '@/components/layout/app-shell';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 
-export default async function OrganizationLayout({ children, params }: { children: React.ReactNode; params: { organizationId: string } }) {
+export default async function OrganizationLayout(
+  props: { children: React.ReactNode; params: Promise<{ organizationId: string }> }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const user = await requireUser();
   const { data } = await createClient()
     .from('organization_members')

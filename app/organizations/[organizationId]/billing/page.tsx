@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import { getOrgBilling } from '@/lib/billing';
 import type { OrgRole } from '@/types/database';
 
-export default async function BillingPage({ params }: { params: { organizationId: string } }) {
+export default async function BillingPage(props: { params: Promise<{ organizationId: string }> }) {
+  const params = await props.params;
   const user = await requireUser();
   const { data: membership } = await createClient()
     .from('organization_members')

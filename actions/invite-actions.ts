@@ -17,7 +17,7 @@ export async function createInvite(formData: FormData): Promise<ActionResult<{ t
     expiresDays: formData.get('expiresDays') || 7,
     maxUses: formData.get('maxUses') || undefined,
   });
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? 'Input tidak valid' };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
   const { data, error } = await createClient().rpc('create_invite', {
     p_org: parsed.data.organizationId ?? null,

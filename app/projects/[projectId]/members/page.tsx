@@ -15,7 +15,8 @@ import {
 } from '@/lib/roles';
 import type { Invite, OrgRole, ProjectRole } from '@/types/database';
 
-export default async function ProjectMembersPage({ params }: { params: { projectId: string } }) {
+export default async function ProjectMembersPage(props: { params: Promise<{ projectId: string }> }) {
+  const params = await props.params;
   const user = await requireUser();
   const supabase = createClient();
 

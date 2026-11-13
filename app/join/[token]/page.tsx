@@ -14,7 +14,8 @@ interface Preview {
   inviter_name?: string | null;
 }
 
-export default async function JoinPage({ params }: { params: { token: string } }) {
+export default async function JoinPage(props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   const token = params.token;
   const user = await getCurrentUser();
 

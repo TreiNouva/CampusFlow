@@ -4,11 +4,12 @@ import { getCurrentUser } from '@/lib/auth/session';
 
 export const metadata: Metadata = { title: 'Atur Ulang Password — CampusFlow' };
 
-export default async function ResetPasswordPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function ResetPasswordPage(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   // Halaman ini hanya valid jika link email sudah diverifikasi (user punya sesi) dan tidak ada error.
   const user = await getCurrentUser();
   const linkValid = Boolean(user) && !searchParams.error;

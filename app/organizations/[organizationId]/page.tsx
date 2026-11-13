@@ -11,11 +11,12 @@ import type { OrgRole } from '@/types/database';
 import { getOrgBilling } from '@/lib/billing';
 import { PLAN_NAME } from '@/lib/plans';
 
-export default async function OrganizationOverviewPage({
-  params,
-}: {
-  params: { organizationId: string };
-}) {
+export default async function OrganizationOverviewPage(
+  props: {
+    params: Promise<{ organizationId: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await requireUser();
   const supabase = createClient();
 

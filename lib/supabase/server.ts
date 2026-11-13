@@ -1,5 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies, type UnsafeUnwrappedCookies } from 'next/headers';
 
 /**
  * Supabase client untuk dipakai di Server Components, Route Handlers,
@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
  * dan setiap query tetap ditegakkan oleh RLS sesuai user yang login.
  */
 export function createClient() {
-  const cookieStore = cookies();
+  const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://localhost:54321',
