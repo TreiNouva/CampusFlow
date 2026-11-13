@@ -365,3 +365,24 @@ dikirim lewat **akun Gmail tim + App Password**:
 3. Baru jalankan `supabase/migrations/0006_manage_perf_interest.sql` di Supabase → SQL Editor.
    (Kalau 0006 dijalankan duluan, form minat versi lama akan error karena fungsi lamanya dikunci.)
 4. Vercel → project → tab **Analytics** → Enable.
+
+## 18. Versi 8.3: Tema Gelap, Notifikasi In-app, Arsip & Laporan LPJ, Data Contoh (migrasi 0007)
+
+**Baru**
+- **Tema gelap** dengan transisi "tinta menyebar" dari tombol tema (menu samping, bar atas HP, halaman depan). Pilihan disimpan di browser; default tema terang. Saat dicetak selalu memakai warna terang.
+- **Lonceng notifikasi** di menu: task baru/diubah untukmu dan pengumuman, dengan "Tandai semua dibaca".
+- **Arsip project** (Pengaturan Project): project selesai jadi read-only dan tidak dihitung kuota project aktif. Daftar arsip ada di halaman organisasi.
+- **Laporan (LPJ)** per project: panitia, capaian task, acara & kehadiran, rekap dana → "Cetak / Simpan PDF".
+- **Poster QR** untuk stan festival: `/minat/poster` (A4, QR ke form minat). Link juga ada di Rekap Interest.
+- **Data contoh**: tombol "Coba dengan data contoh" di Beranda membuat 1 organisasi demo lengkap (sekali per akun; hapus lewat Pengaturan Organisasi).
+- **Akun saya**: tombol "Kirim link reset ke email" untuk yang lupa password lama.
+
+**Perbaikan**
+- Bug: tutorial selesai tidak tersimpan di database (selalu muncul lagi di perangkat/browser baru).
+- Privasi: nama & email pengguna sekarang hanya terlihat oleh rekan satu organisasi/project (sebelumnya semua akun login bisa membaca daftar email lewat API).
+- `engines.node` = `24.x` (sama dengan Project Settings Vercel; warning Node hilang).
+- Supabase client server dibuat async (siap untuk Next.js berikutnya).
+
+**Urutan deploy**
+1. Supabase → SQL Editor → jalankan `supabase/migrations/0007_privacy_archive_inapp_demo.sql` (aman dijalankan sebelum kode baru).
+2. Push kode v8.3 → tunggu Vercel Ready.

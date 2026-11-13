@@ -30,7 +30,7 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
     return { success: false, error: 'Tanggal selesai project tidak boleh sebelum tanggal mulai.' };
   }
 
-  const { data, error } = await createClient().rpc('create_project', {
+  const { data, error } = await (await createClient()).rpc('create_project', {
     p_org: parsed.data.organizationId,
     p_name: parsed.data.name,
     p_description: parsed.data.description ?? null,
@@ -48,7 +48,7 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
 
 /** getProjectActivity — Mengambil histori aktivitas terbaru sebuah project (§13). */
 export async function getProjectActivity(projectId: string, limit = 20): Promise<ActivityLog[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('activity_logs')
     .select('*, actor:profiles!activity_logs_actor_id_fkey(id, full_name, email), task:tasks(id, title)')

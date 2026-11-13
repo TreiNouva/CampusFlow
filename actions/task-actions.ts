@@ -9,6 +9,7 @@ import { rpcErrorMessage } from '@/lib/rpc';
 import { checkProjectPeriod } from '@/lib/project-period';
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations/schemas';
 import { sendEmail } from '@/lib/email/send';
+import { pushInApp } from '@/lib/inapp';
 import { taskAssignedEmail } from '@/emails/task-assigned';
 import { taskUpdatedEmail } from '@/emails/task-updated';
 import { formatDate, STATUS_LABEL } from '@/lib/utils';
@@ -124,6 +125,17 @@ async function notifyRecipients(params: {
 
   const admin = createAdminClient();
 
+  // Notifikasi in-app (lonceng) untuk penerima yang sama dengan email.
+  await pushInApp(
+    recipients.map((recipient) => ({
+      userId: recipient.id,
+      projectId,
+      type: event,
+      title: buildEmail(recipient).subject,
+      link: taskId ? `/projects/${projectId}/tasks/${taskId}` : `/projects/${projectId}`,
+    }))
+  );
+
   await Promise.all(
     recipients.map(async (recipient) => {
       const { subject, html } = buildEmail(recipient);
@@ -168,7 +180,7 @@ export async function createTask(formData: FormData): Promise<ActionResult<{ id:
   ]);
   if (createPeriodError) return { success: false, error: createPeriodError };
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Tiga pengecekan/pengambilan data independen -> dijalankan bersamaan.
   const [allowed, { data: project }, { data: actorProfile }] = await Promise.all([
@@ -276,7 +288,7 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [{ data: currentTask, error: fetchError }, { data: actorProfile }] = await Promise.all([
     supabase.from('tasks').select('*, project:projects(id, name)').eq('id', parsed.data.taskId).single(),

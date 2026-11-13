@@ -28,7 +28,7 @@ export async function looksLikeTeamAdmin(): Promise<boolean> {
 export async function isTeamAdmin(): Promise<boolean> {
   const {
     data: { user },
-  } = await createClient().auth.getUser();
+  } = await (await createClient()).auth.getUser();
   const email = user?.email?.toLowerCase();
   if (!email || !user?.email_confirmed_at) return false;
   return adminEmails().includes(email);

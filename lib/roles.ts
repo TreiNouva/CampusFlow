@@ -102,7 +102,7 @@ export const canManageProjectMembers = (role: ProjectRole | null | undefined, or
 
 // ---------------------------------------------------------------- Warna badge
 export const ORG_ROLE_COLOR: Record<OrgRole, string> = {
-  ketua: 'bg-navy text-white',
+  ketua: 'bg-brand text-white',
   wakil_ketua: 'bg-sky text-navy',
   koordinator: 'bg-sky text-navy',
   sekretaris: 'bg-gray-100 text-gray-700',
@@ -111,8 +111,8 @@ export const ORG_ROLE_COLOR: Record<OrgRole, string> = {
 };
 
 export const PROJECT_ROLE_COLOR: Record<ProjectRole, string> = {
-  ketua: 'bg-navy text-white',
-  project_manager: 'bg-navy text-white',
+  ketua: 'bg-brand text-white',
+  project_manager: 'bg-brand text-white',
   wakil_project_manager: 'bg-sky text-navy',
   pic: 'bg-sky text-navy',
   koordinator: 'bg-sky text-navy',

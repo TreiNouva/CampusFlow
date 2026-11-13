@@ -16,7 +16,7 @@ import type { ActivityLog, ProjectRole, TaskPriority, TaskStatus } from '@/types
 export default async function TaskDetailPage(props: { params: Promise<{ projectId: string; taskId: string }> }) {
   const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [{ data: task }, { data: membership }, { data: members }, { data: taskActivity }, { data: divisions }, { data: docs }, { data: project }] =
     await Promise.all([

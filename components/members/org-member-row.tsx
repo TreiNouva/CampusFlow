@@ -61,7 +61,7 @@ export function OrgMemberRow({ organizationId, member, myRole, myUserId }: Props
     <li className="px-5 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
             {initials(member.name || member.email)}
           </div>
           <div>

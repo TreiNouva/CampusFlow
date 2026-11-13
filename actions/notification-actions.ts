@@ -14,7 +14,7 @@ import type { NotificationLog } from '@/types/database';
  */
 export async function getNotificationPreferences(projectId: string) {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('project_members')
     .select('notification_level')
@@ -37,7 +37,7 @@ export async function updateNotificationPreference(formData: FormData): Promise<
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from('project_members')
     .update({ notification_level: parsed.data.level })
@@ -58,7 +58,7 @@ export async function getNotificationLogs(projectId: string, limit = 30): Promis
   const allowed = await canAccessProject(projectId, allowedUser.id);
   if (!allowed) return [];
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('notification_logs')
     .select('*')

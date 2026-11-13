@@ -149,7 +149,7 @@ export function InterestForm({
       </label>
       {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
       <button type="submit" disabled={pending}
-        className={cn('w-full rounded-lg bg-navy font-semibold text-white hover:bg-navy-dark disabled:opacity-50', kiosk ? 'py-4 text-lg' : 'py-2.5 text-sm')}>
+        className={cn('w-full rounded-lg bg-brand font-semibold text-white hover:bg-brand-dark disabled:opacity-50', kiosk ? 'py-4 text-lg' : 'py-2.5 text-sm')}>
         {pending ? 'Menyimpan…' : 'Kirim'}
       </button>
     </form>

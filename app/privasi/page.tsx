@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
+import { ThemedLogo } from '@/components/theme/theme';
 import Link from 'next/link';
 
 export const metadata: Metadata = { title: 'Kebijakan Privasi · CampusFlow' };
@@ -13,10 +13,10 @@ const UPDATED = '13 November 2026';
 export default function PrivacyPage() {
   const contact = process.env.SMTP_USER || 'email tim CampusFlow';
   return (
-    <div className="min-h-screen bg-[#F6F8FA]">
-      <header className="border-b border-line bg-white">
+    <div className="min-h-screen bg-canvas">
+      <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" aria-label="CampusFlow"><Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={150} height={38} /></Link>
+          <Link href="/" aria-label="CampusFlow"><ThemedLogo width={150} height={38} /></Link>
           <Link href="/" className="text-sm font-semibold text-navy hover:underline">Kembali</Link>
         </div>
       </header>

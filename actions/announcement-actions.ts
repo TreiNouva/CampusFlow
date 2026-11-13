@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/auth/session';
 import { announcementSchema, updateAnnouncementSchema } from '@/lib/validations/schemas';
 import { sendEmail } from '@/lib/email/send';
+import { pushInApp } from '@/lib/inapp';
 import { projectAnnouncementEmail } from '@/emails/project-announcement';
 import type { ActionResult } from './organization-actions';
 import type { Profile } from '@/types/database';
@@ -29,7 +30,7 @@ async function emailAnnouncement(params: {
   divisionId: string | null;
 }) {
   const { projectId, actorId, title, body, isUpdate, divisionId } = params;
-  const supabase = createClient();
+  const supabase = await createClient();
   const admin = createAdminClient();
 
   const [{ data: project }, { data: actorProfile }, { data: members }, { data: division }] = await Promise.all([
@@ -57,6 +58,17 @@ async function emailAnnouncement(params: {
     )
     .map((row: any) => row.profile as Profile | null)
     .filter((p): p is Profile => Boolean(p));
+
+  await pushInApp(
+    recipients.map((recipient) => ({
+      userId: recipient.id,
+      projectId,
+      type: isUpdate ? 'announcement_updated' : 'project_announcement',
+      title: `${isUpdate ? 'Pengumuman diperbarui' : 'Pengumuman baru'}: ${title}`,
+      body: `${project?.name ?? 'Project'}${division ? ` · Divisi ${division.name}` : ''}`,
+      link: `/projects/${projectId}/announcements`,
+    }))
+  );
 
   await Promise.all(
     recipients.map(async (recipient) => {
@@ -96,7 +108,7 @@ export async function createAnnouncement(formData: FormData): Promise<ActionResu
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const divisionId = parsed.data.divisionId ?? null;
 
-  const { data: announcement, error } = await createClient()
+  const { data: announcement, error } = await (await createClient())
     .from('announcements')
     .insert({
       project_id: parsed.data.projectId,
@@ -147,7 +159,7 @@ export async function updateAnnouncement(formData: FormData): Promise<ActionResu
   });
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
-  const { data, error } = await createClient()
+  const { data, error } = await (await createClient())
     .from('announcements')
     .update({ title: parsed.data.title, body: parsed.data.body })
     .eq('id', parsed.data.announcementId)
@@ -193,7 +205,7 @@ export async function deleteAnnouncement(formData: FormData): Promise<ActionResu
     return { success: false, error: 'Pengumuman tidak valid.' };
   }
 
-  const { data, error } = await createClient()
+  const { data, error } = await (await createClient())
     .from('announcements')
     .delete()
     .eq('id', announcementId)

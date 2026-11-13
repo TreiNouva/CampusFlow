@@ -25,7 +25,7 @@ export function canManageBillingRole(role: OrgRole | null | undefined): boolean 
 
 /** Paket, kuota, dan riwayat pembayaran sebuah organisasi (dibaca lewat RLS user yang login). */
 export async function getOrgBilling(orgId: string, myRole: OrgRole | null): Promise<OrgBilling> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10); // tanggal WIB
   const canManage = canManageBillingRole(myRole);
 

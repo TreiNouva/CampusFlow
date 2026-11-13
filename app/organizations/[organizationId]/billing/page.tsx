@@ -9,7 +9,7 @@ import type { OrgRole } from '@/types/database';
 export default async function BillingPage(props: { params: Promise<{ organizationId: string }> }) {
   const params = await props.params;
   const user = await requireUser();
-  const { data: membership } = await createClient()
+  const { data: membership } = await (await createClient())
     .from('organization_members')
     .select('role, organization:organizations(id, name)')
     .eq('organization_id', params.organizationId)

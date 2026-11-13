@@ -28,7 +28,7 @@ export async function activatePlanDemo(input: z.infer<typeof activateSchema>): P
   await requireUser();
   const parsed = activateSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: 'Pilihan paket tidak valid.' };
-  const { data, error } = await createClient().rpc('activate_plan_demo', {
+  const { data, error } = await (await createClient()).rpc('activate_plan_demo', {
     p_org: parsed.data.organizationId,
     p_plan: 'organization',
     p_seat_packs: parsed.data.seatPacks,
@@ -42,7 +42,7 @@ export async function activatePlanDemo(input: z.infer<typeof activateSchema>): P
 export async function cancelPlanDemo(organizationId: string): Promise<Result> {
   await requireUser();
   if (!z.string().uuid().safeParse(organizationId).success) return { success: false, error: 'Organisasi tidak valid.' };
-  const { error } = await createClient().rpc('cancel_plan_demo', { p_org: organizationId });
+  const { error } = await (await createClient()).rpc('cancel_plan_demo', { p_org: organizationId });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal mengubah paket.') };
   revalidatePath(`/organizations/${organizationId}`, 'layout');
   return { success: true };

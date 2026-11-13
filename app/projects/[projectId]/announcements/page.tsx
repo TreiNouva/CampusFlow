@@ -10,7 +10,7 @@ import type { Announcement } from '@/types/database';
 export default async function AnnouncementsPage(props: { params: Promise<{ projectId: string }> }) {
   const params = await props.params;
   const { project, myRole, myDivisionId, userId } = await getProjectContext(params.projectId);
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ data: announcements }, { data: divisions }] = await Promise.all([
     supabase
       .from('announcements')

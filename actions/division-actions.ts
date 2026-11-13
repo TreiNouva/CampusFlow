@@ -17,7 +17,7 @@ export async function createDivision(formData: FormData): Promise<ActionResult> 
   });
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   let color = parsed.data.color && DIVISION_PALETTE.some((c) => c.key === parsed.data.color) ? parsed.data.color : null;
   if (!color) {
     const { data: existing } = await supabase.from('project_divisions').select('color').eq('project_id', parsed.data.projectId);
@@ -48,7 +48,7 @@ export async function deleteDivision(formData: FormData): Promise<ActionResult> 
   });
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
-  const { data, error } = await createClient()
+  const { data, error } = await (await createClient())
     .from('project_divisions')
     .delete()
     .eq('id', parsed.data.divisionId)
@@ -78,7 +78,7 @@ export async function updateDivisionColor(formData: FormData): Promise<ActionRes
   if (!parsed.success || !DIVISION_PALETTE.some((c) => c.key === parsed.data.color)) {
     return { success: false, error: 'Warna tidak valid.' };
   }
-  const { data, error } = await createClient()
+  const { data, error } = await (await createClient())
     .from('project_divisions')
     .update({ color: parsed.data.color })
     .eq('id', parsed.data.divisionId)

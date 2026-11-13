@@ -8,7 +8,7 @@ import type { OrgRole, ProjectRole } from '@/types/database';
  */
 
 export async function getOrgRole(organizationId: string, userId: string): Promise<OrgRole | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('organization_members')
     .select('role')
@@ -19,7 +19,7 @@ export async function getOrgRole(organizationId: string, userId: string): Promis
 }
 
 export async function getProjectRole(projectId: string, userId: string): Promise<ProjectRole | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('project_members')
     .select('role')

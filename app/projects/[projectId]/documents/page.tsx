@@ -16,7 +16,7 @@ export default async function DocumentsPage(
   const searchParams = await props.searchParams;
   const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
   const pid = params.projectId;
 
   const [{ data: project }, { data: membership }, { data: docs }, { data: divisions }] = await Promise.all([
@@ -62,11 +62,11 @@ export default async function DocumentsPage(
             <Card>
               <CardHeader>
                 <div className="flex flex-wrap gap-1.5">
-                  <Link href={`/projects/${pid}/documents`} className={cn('rounded-full px-3 py-1 text-xs font-semibold', !filter ? 'bg-navy text-white' : 'bg-gray-100 text-muted hover:text-ink')}>
+                  <Link href={`/projects/${pid}/documents`} className={cn('rounded-full px-3 py-1 text-xs font-semibold', !filter ? 'bg-brand text-white' : 'bg-gray-100 text-muted hover:text-ink')}>
                     Semua ({(docs ?? []).length})
                   </Link>
                   {DOCUMENT_CATEGORIES.filter((c) => counts.get(c)).map((c) => (
-                    <Link key={c} href={`/projects/${pid}/documents?kategori=${c}`} className={cn('rounded-full px-3 py-1 text-xs font-semibold', filter === c ? 'bg-navy text-white' : 'bg-gray-100 text-muted hover:text-ink')}>
+                    <Link key={c} href={`/projects/${pid}/documents?kategori=${c}`} className={cn('rounded-full px-3 py-1 text-xs font-semibold', filter === c ? 'bg-brand text-white' : 'bg-gray-100 text-muted hover:text-ink')}>
                       {DOCUMENT_CATEGORY_LABEL[c]} ({counts.get(c)})
                     </Link>
                   ))}

@@ -37,7 +37,7 @@ export function Modal({
       }}
     >
       <div className="flex min-h-full items-center justify-center">
-        <div role="dialog" aria-modal="true" aria-label={title} className={`w-full ${maxWidth} rounded-card bg-white p-5 shadow-xl`}>
+        <div role="dialog" aria-modal="true" aria-label={title} className={`w-full ${maxWidth} rounded-card bg-surface p-5 shadow-xl`}>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-heading text-lg font-bold text-ink">{title}</h2>
             <button type="button" onClick={onClose} disabled={busy} className="rounded-md px-2 py-1 text-sm text-muted hover:bg-gray-100" aria-label="Tutup">

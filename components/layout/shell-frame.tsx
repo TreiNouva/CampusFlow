@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { ThemedLogo, ThemeToggle } from '@/components/theme/theme';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,6 +8,7 @@ import { logout } from '@/actions/auth-actions';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { OnboardingTour, openTour } from '@/components/onboarding/onboarding-tour';
 import { cn, initials } from '@/lib/utils';
+import { NotificationBell, type BellItem } from './notification-bell';
 
 export interface MenuItem { href: string; label: string; icon: IconName; exact?: boolean }
 export interface MenuSection { title: string; items: MenuItem[] }
@@ -20,13 +21,14 @@ function isActive(pathname: string, item: MenuItem) {
 }
 
 export function ShellFrame({
-  sections, header, bottomNav, user, showTour, children,
+  sections, header, bottomNav, user, showTour, notifications, children,
 }: {
   sections: MenuSection[];
   header?: ProjectHeader;
   bottomNav?: MenuItem[];
   user: { name: string; email: string };
   showTour: boolean;
+  notifications: { items: BellItem[]; unread: number };
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -44,7 +46,8 @@ export function ShellFrame({
   const menu = (
     <nav className="flex h-full flex-col" aria-label="Menu utama">
       <div className="flex items-center justify-between px-5 pb-3 pt-5">
-        <Link href="/dashboard" aria-label="CampusFlow, ke beranda"><Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={148} height={38} priority /></Link>
+        <Link href="/dashboard" aria-label="CampusFlow, ke beranda"><ThemedLogo width={148} height={38} priority /></Link>
+        <div className="hidden lg:block"><NotificationBell items={notifications.items} unread={notifications.unread} align="left" /></div>
         <button type="button" onClick={() => setDrawer(false)} className="rounded-lg p-1.5 text-muted hover:bg-gray-100 lg:hidden" aria-label="Tutup menu">
           <Icon name="close" />
         </button>
@@ -96,9 +99,10 @@ export function ShellFrame({
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-ink">
           <Icon name="help" size={18} className="text-gray-400" /> Panduan singkat
         </button>
+        <ThemeToggle withLabel />
         <div className="mt-2 flex items-center gap-2.5 px-3">
           <Link href="/akun" onClick={() => setDrawer(false)} title="Akun saya" className="-mx-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-gray-50">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">{initials(user.name)}</span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">{initials(user.name)}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium text-ink">{user.name}</span>
               <span className="block truncate text-xs text-muted">{user.email}</span>
@@ -115,12 +119,12 @@ export function ShellFrame({
   );
 
   return (
-    <div className="min-h-screen bg-[#F6F8FA]">
+    <div className="min-h-screen bg-canvas">
       {/* Sidebar desktop */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line bg-white lg:block">{menu}</aside>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line bg-surface lg:block print:!hidden">{menu}</aside>
 
       {/* Bar atas HP/tablet */}
-      <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-white/95 px-3 py-2.5 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-surface/95 px-3 py-2.5 backdrop-blur lg:hidden print:hidden">
         <button type="button" onClick={() => setDrawer(true)} className="rounded-lg p-2 text-ink hover:bg-gray-100" aria-label="Buka menu" aria-expanded={drawer}>
           <Icon name="menu" />
         </button>
@@ -128,22 +132,24 @@ export function ShellFrame({
           <p className="truncate text-sm font-semibold text-ink">{header?.title ?? 'CampusFlow'}</p>
           {current && <p className="truncate text-xs text-muted">{current.label}</p>}
         </div>
-        <Link href="/akun" aria-label="Akun saya" className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">{initials(user.name)}</Link>
+        <NotificationBell items={notifications.items} unread={notifications.unread} />
+        <ThemeToggle />
+        <Link href="/akun" aria-label="Akun saya" className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">{initials(user.name)}</Link>
       </header>
 
       {/* Drawer HP */}
       {drawer && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <button type="button" className="animate-fade-in absolute inset-0 bg-black/30" onClick={() => setDrawer(false)} aria-label="Tutup menu" />
-          <div className="drawer-in absolute inset-y-0 left-0 w-[84%] max-w-xs bg-white shadow-xl">{menu}</div>
+          <div className="drawer-in absolute inset-y-0 left-0 w-[84%] max-w-xs bg-surface shadow-xl">{menu}</div>
         </div>
       )}
 
-      <div className={cn('lg:pl-64', bottomNav && 'pb-20 lg:pb-0')}>{children}</div>
+      <div className={cn('lg:pl-64 print:!p-0', bottomNav && 'pb-20 lg:pb-0')}>{children}</div>
 
       {/* Navigasi bawah HP (gaya aplikasi m-banking): 4 menu utama + Menu lainnya */}
       {bottomNav && (
-        <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Navigasi cepat">
+        <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden print:hidden" aria-label="Navigasi cepat">
           <ul className="grid grid-cols-5">
             {bottomNav.map((item) => {
               const active = isActive(pathname, item);

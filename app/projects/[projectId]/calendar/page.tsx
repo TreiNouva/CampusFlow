@@ -10,7 +10,7 @@ import { todayJakarta } from '@/lib/dates';
 export default async function ProjectCalendarPage(props: { params: Promise<{ projectId: string }> }) {
   const params = await props.params;
   const { project, myRole, myDivisionId, userId } = await getProjectContext(params.projectId);
-  const supabase = createClient();
+  const supabase = await createClient();
   const today = todayJakarta();
   const pid = project.id;
 

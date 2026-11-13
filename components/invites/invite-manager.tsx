@@ -124,7 +124,7 @@ export function InviteManager({ scope, organizationId, projectId, divisions = []
                 href={`https://wa.me/?text=${shareText(newToken)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-navy hover:bg-gray-50"
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-surface px-3 py-1.5 text-xs font-medium text-navy hover:bg-gray-50"
               >
                 Bagikan lewat WhatsApp
               </a>

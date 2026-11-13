@@ -9,7 +9,7 @@ import { requireUser } from '@/lib/auth/session';
  */
 export async function completeOnboarding(): Promise<{ success: boolean }> {
   const user = await requireUser();
-  const { error } = await createClient().from('profiles').update({ onboarded_at: new Date().toISOString() }).eq('id', user.id);
+  const { error } = await (await createClient()).from('profiles').update({ onboarded_at: new Date().toISOString() }).eq('id', user.id);
   if (error) console.error('[onboarding]', error.code, error.message);
   return { success: !error };
 }

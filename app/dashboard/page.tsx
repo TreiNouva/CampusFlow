@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Card, CardBody, Badge } from '@/components/ui/card';
 import { PageHeader } from '@/components/layout/page-header';
 import { CreateOrganizationForm } from '@/components/dashboard/create-organization-form';
+import { DemoWorkspaceButton } from '@/components/manage/manage-forms';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate, PRIORITY_COLOR, PRIORITY_LABEL, STATUS_COLOR, STATUS_LABEL } from '@/lib/utils';
@@ -10,7 +11,7 @@ import type { OrgRole, TaskPriority, TaskStatus } from '@/types/database';
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Dua query independen -> dijalankan bersamaan, bukan satu per satu.
   const [{ data: orgMemberships }, { data: myTasks }] = await Promise.all([
@@ -37,7 +38,7 @@ export default async function DashboardPage() {
         <PageHeader
           title="Beranda"
           description="Organisasimu dan task yang perlu segera dikerjakan."
-          actions={<Link href="#create-organization" className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark">+ Organisasi baru</Link>}
+          actions={<Link href="#create-organization" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">+ Organisasi baru</Link>}
         />
 
         <section>
@@ -102,6 +103,12 @@ export default async function DashboardPage() {
 
         <section id="create-organization" className="mt-10">
           <CreateOrganizationForm />
+          {organizations.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-card border border-dashed border-line px-4 py-3 text-sm text-muted">
+              <span>Mau mencoba fitur tanpa mengganggu data asli?</span>
+              <DemoWorkspaceButton />
+            </div>
+          )}
         </section>
       </main>
     </div>
@@ -113,8 +120,10 @@ function EmptyOrganizations() {
     <Card>
       <CardBody className="py-8 text-center">
         <p className="text-sm text-muted">
-          Kamu belum tergabung di organisasi mana pun. Buat organisasi pertamamu di bawah ini.
+          Kamu belum tergabung di organisasi mana pun. Buat organisasi pertamamu di bawah ini,
+          atau lihat dulu contohnya: kami siapkan organisasi berisi project, task, kalender, dan budget dummy.
         </p>
+        <DemoWorkspaceButton className="mt-4" />
       </CardBody>
     </Card>
   );

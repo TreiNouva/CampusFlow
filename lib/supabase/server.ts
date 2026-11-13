@@ -1,13 +1,14 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies, type UnsafeUnwrappedCookies } from 'next/headers';
+import { cookies } from 'next/headers';
 
 /**
  * Supabase client untuk dipakai di Server Components, Route Handlers,
  * dan Server Actions. Session diambil/disimpan lewat cookies Next.js,
  * dan setiap query tetap ditegakkan oleh RLS sesuai user yang login.
+ * v8.3: async (cookies() di Next 15 adalah Promise) — panggil dengan `await createClient()`.
  */
-export function createClient() {
-  const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://localhost:54321',

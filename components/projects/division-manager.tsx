@@ -65,7 +65,7 @@ export function DivisionManager({ projectId, divisions, canManage }: Props) {
               >
                 {canManage ? (
                   <label className="relative flex cursor-pointer items-center" title="Ganti warna divisi">
-                    <span className="h-3.5 w-3.5 rounded-full ring-2 ring-white" style={{ backgroundColor: divisionColor(d.color).accent }} />
+                    <span className="h-3.5 w-3.5 rounded-full ring-2 ring-surface" style={{ backgroundColor: divisionColor(d.color).accent }} />
                     <select
                       aria-label={`Warna divisi ${d.name}`}
                       value={d.color}

@@ -26,7 +26,7 @@ export async function login(formData: FormData): Promise<ActionResult> {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -61,7 +61,7 @@ export async function register(formData: FormData): Promise<ActionResult<{ needs
   }
 
   const next = safeNextPath(formData.get('next'));
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -95,7 +95,7 @@ export async function register(formData: FormData): Promise<ActionResult<{ needs
 }
 
 export async function logout(): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.auth.signOut();
   redirect('/login');
 }
@@ -115,7 +115,7 @@ export async function updatePassword(formData: FormData): Promise<ActionResult> 
     return { success: false, error: 'Sesi reset password sudah berakhir. Silakan minta link baru.' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
     console.error('[updatePassword]', error.status, error.message);

@@ -48,7 +48,7 @@ export async function createEvent(formData: FormData): Promise<ActionResult> {
   ]);
   if (periodError) return { success: false, error: periodError };
 
-  const { data, error } = await createClient()
+  const { data, error } = await (await createClient())
     .from('project_events')
     .insert({
       project_id: parsed.data.projectId,
@@ -86,7 +86,7 @@ export async function updateEvent(formData: FormData): Promise<ActionResult> {
   ]);
   if (periodError) return { success: false, error: periodError };
 
-  const { data, error } = await createClient()
+  const { data, error } = await (await createClient())
     .from('project_events')
     .update({
       division_id: parsed.data.divisionId ?? null,
@@ -112,7 +112,7 @@ export async function deleteEvent(formData: FormData): Promise<ActionResult> {
   const eventId = String(formData.get('eventId') ?? '');
   const projectId = String(formData.get('projectId') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || !/^[0-9a-f-]{36}$/i.test(projectId)) return { success: false, error: 'Acara tidak valid.' };
-  const { data, error } = await createClient().from('project_events').delete().eq('id', eventId).eq('project_id', projectId).select('id');
+  const { data, error } = await (await createClient()).from('project_events').delete().eq('id', eventId).eq('project_id', projectId).select('id');
   if (error || !data || data.length === 0) return { success: false, error: 'Acara tidak ditemukan atau kamu tidak berhak menghapusnya.' };
   revalidatePath(`/projects/${projectId}`, 'layout');
   return { success: true };
@@ -126,7 +126,7 @@ export async function setAttendance(formData: FormData): Promise<ActionResult> {
     userId: formData.get('userId'), status: formData.get('status'),
   });
   if (!parsed.success) return { success: false, error: 'Input tidak valid' };
-  const { error } = await createClient().rpc('set_attendance', {
+  const { error } = await (await createClient()).rpc('set_attendance', {
     p_event: parsed.data.eventId, p_user: parsed.data.userId, p_status: parsed.data.status,
   });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menyimpan kehadiran.') };
@@ -140,7 +140,7 @@ export async function checkInEvent(formData: FormData): Promise<ActionResult> {
   const eventId = String(formData.get('eventId') ?? '');
   const projectId = String(formData.get('projectId') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(eventId)) return { success: false, error: 'Acara tidak valid.' };
-  const { error } = await createClient().rpc('check_in_event', { p_event: eventId });
+  const { error } = await (await createClient()).rpc('check_in_event', { p_event: eventId });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal check-in.') };
   revalidatePath(`/projects/${projectId}`, 'layout');
   return { success: true };

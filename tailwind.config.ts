@@ -1,6 +1,11 @@
 import type { Config } from 'tailwindcss';
 
+/** Warna dari CSS variable berisi kanal RGB ("18 54 94"), tetap mendukung opacity (bg-navy/30). */
+const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`;
+const scale = (name: string, steps: number[]) => Object.fromEntries(steps.map((n) => [n, v(`${name}-${n}`)]));
+
 const config: Config = {
+  darkMode: 'class',
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -8,23 +13,24 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // v8.3: semua warna lewat CSS variable (lihat app/globals.css) supaya ada tema terang & gelap.
       colors: {
-        navy: {
-          DEFAULT: '#12365E',
-          dark: '#0E2A49',
-        },
-        // v7: palet dibuat lebih tenang — satu warna utama (navy), satu aksen (teal),
-        // amber HANYA untuk peringatan, merah HANYA untuk error/telat. Sisanya abu-abu.
-        teal: '#2B6C8A',
-        orange: {
-          // nama token dipertahankan agar kode lama tetap jalan; maknanya kini "peringatan"
-          DEFAULT: '#B26B12',
-          light: '#FBF3E6',
-        },
-        sky: '#E8EFF5',
-        ink: '#1B2430',
-        muted: '#5F6B7A',
-        line: '#E6EAF0',
+        navy: { DEFAULT: v('navy'), dark: v('navy-dark') },
+        // brand = warna latar tombol utama; di tema gelap sedikit lebih terang agar teks putih tetap kontras.
+        brand: { DEFAULT: v('brand'), dark: v('brand-dark') },
+        teal: v('teal'),
+        orange: { DEFAULT: v('orange'), light: v('orange-light') },
+        warn: { line: v('warn-line'), ink: v('warn-ink') },
+        sky: { DEFAULT: v('sky'), strong: v('sky-strong') },
+        ink: v('ink'),
+        muted: v('muted'),
+        line: v('line'),
+        surface: v('surface'),
+        canvas: v('canvas'),
+        gray: scale('gray', [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]),
+        red: scale('red', [50, 100, 200, 300, 500, 600, 700]),
+        green: scale('green', [50, 100, 200, 600, 700, 800]),
+        emerald: scale('emerald', [50, 700]),
       },
       fontFamily: {
         heading: ['Georgia', 'Cambria', 'serif'],

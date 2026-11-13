@@ -229,7 +229,7 @@ export function AttendancePanel({
                 value={p.status ?? ''}
                 disabled={busy}
                 onChange={(e) => e.target.value && mark(p.userId, e.target.value as AttendanceStatus)}
-                className="rounded border border-gray-200 bg-white px-1.5 py-0.5"
+                className="rounded border border-gray-200 bg-surface px-1.5 py-0.5"
               >
                 <option value="">—</option>
                 {(Object.keys(STATUS_LABEL) as AttendanceStatus[]).map((s) => (

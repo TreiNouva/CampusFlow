@@ -9,7 +9,7 @@ import type { ProjectRole } from '@/types/database';
 export default async function BudgetPage(props: { params: Promise<{ projectId: string }> }) {
   const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
   const pid = params.projectId;
 
   const [{ data: project }, { data: membership }, { data: plans }, { data: entries }, { data: divisions }] = await Promise.all([
@@ -38,7 +38,7 @@ export default async function BudgetPage(props: { params: Promise<{ projectId: s
             />
           </div>
         ) : (
-          <p className="mt-4 rounded-lg bg-white p-6 text-sm text-muted shadow-sm">Budget hanya dapat dilihat oleh Ketua, Project Manager, Wakil PM, dan Bendahara.</p>
+          <p className="mt-4 rounded-lg bg-surface p-6 text-sm text-muted shadow-sm">Budget hanya dapat dilihat oleh Ketua, Project Manager, Wakil PM, dan Bendahara.</p>
         )}
       </main>
     </div>

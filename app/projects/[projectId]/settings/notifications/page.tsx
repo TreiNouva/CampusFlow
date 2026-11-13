@@ -19,7 +19,7 @@ export default async function NotificationSettingsPage(
 ) {
   const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Semua query dijalankan bersamaan. Level notifikasi diambil dari baris membership yang sama,
   // dan log diambil langsung (RLS sudah membatasi hanya untuk anggota project).

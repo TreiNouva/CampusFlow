@@ -20,7 +20,7 @@ export function LoadingOverlay({ label = 'Memuat...', delayed = false }: Loading
         delayed ? 'animate-fade-in-delayed' : 'animate-fade-in'
       )}
     >
-      <div className="flex items-center gap-3 rounded-card bg-white px-5 py-3 shadow-lg">
+      <div className="flex items-center gap-3 rounded-card bg-surface px-5 py-3 shadow-lg">
         <span
           className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-navy"
           aria-hidden="true"

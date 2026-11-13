@@ -2,12 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   TEMA (v8.3) — token warna sebagai kanal RGB, dipakai tailwind.config.ts.
+   Terang = default. Gelap aktif lewat class "dark" di <html> (lihat ThemeScript).
+   ========================================================================== */
+:root {
+  color-scheme: light;
+  --c-navy: 18 54 94;       --c-navy-dark: 14 42 73;
+  --c-brand: 18 54 94;      --c-brand-dark: 14 42 73;
+  --c-teal: 43 108 138;
+  --c-orange: 178 107 18;   --c-orange-light: 251 243 230;
+  --c-warn-line: 241 221 190; --c-warn-ink: 122 74 12;
+  --c-sky: 232 239 245;     --c-sky-strong: 219 230 239;
+  --c-ink: 27 36 48;        --c-muted: 95 107 122;   --c-line: 230 234 240;
+  --c-surface: 255 255 255; --c-canvas: 246 248 250;
+  --c-gray-50: 249 250 251; --c-gray-100: 243 244 246; --c-gray-200: 229 231 235; --c-gray-300: 209 213 219;
+  --c-gray-400: 156 163 175; --c-gray-500: 107 114 128; --c-gray-600: 75 85 99; --c-gray-700: 55 65 81;
+  --c-gray-800: 31 41 55;   --c-gray-900: 17 24 39;
+  --c-red-50: 254 242 242;  --c-red-100: 254 226 226; --c-red-200: 254 202 202; --c-red-300: 252 165 165;
+  --c-red-500: 239 68 68;   --c-red-600: 220 38 38;   --c-red-700: 185 28 28;
+  --c-green-50: 240 253 244; --c-green-100: 220 252 231; --c-green-200: 187 247 208;
+  --c-green-600: 22 163 74; --c-green-700: 21 128 61; --c-green-800: 22 101 52;
+  --c-emerald-50: 236 253 245; --c-emerald-700: 4 120 87;
+}
+
+/* Hanya di layar: saat dicetak (LPJ, poster) selalu memakai warna terang. */
+@media screen {
+.dark {
+  color-scheme: dark;
+  --c-navy: 127 176 224;    --c-navy-dark: 98 150 205;
+  --c-brand: 42 95 150;     --c-brand-dark: 34 79 126;
+  --c-teal: 95 167 199;
+  --c-orange: 224 160 74;   --c-orange-light: 43 32 16;
+  --c-warn-line: 92 66 28;  --c-warn-ink: 240 196 130;
+  --c-sky: 22 38 58;        --c-sky-strong: 30 50 74;
+  --c-ink: 230 235 241;     --c-muted: 148 160 176;  --c-line: 37 48 64;
+  --c-surface: 18 26 36;    --c-canvas: 11 17 25;
+  --c-gray-50: 22 30 41;    --c-gray-100: 28 37 51;  --c-gray-200: 38 49 66;  --c-gray-300: 51 64 85;
+  --c-gray-400: 107 119 137; --c-gray-500: 139 150 166; --c-gray-600: 167 177 191; --c-gray-700: 195 203 214;
+  --c-gray-800: 220 226 234; --c-gray-900: 238 242 246;
+  --c-red-50: 48 20 22;     --c-red-100: 66 25 28;   --c-red-200: 102 36 40;  --c-red-300: 153 52 56;
+  --c-red-500: 239 83 80;   --c-red-600: 248 113 113; --c-red-700: 252 165 165;
+  --c-green-50: 16 40 28;   --c-green-100: 20 54 36; --c-green-200: 30 84 52;
+  --c-green-600: 74 222 128; --c-green-700: 110 231 160; --c-green-800: 134 239 172;
+  --c-emerald-50: 14 42 32; --c-emerald-700: 110 231 183;
+}
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
-  background-color: #f6f8fa;
-  color: #1b1b1f;
+  background-color: rgb(var(--c-canvas));
+  color: rgb(var(--c-ink));
+}
+
+/* Logo: versi gelap/terang ditukar otomatis */
+.logo-on-dark { display: none; }
+@media screen {
+  .dark .logo-on-light { display: none; }
+  .dark .logo-on-dark { display: inline-block; }
+}
+
+/* --------------------------------------------------------------------------
+   Transisi ganti tema "ink splash": tema baru menyebar seperti tinta dari tombol.
+   Pakai View Transitions API; browser yang belum mendukung langsung berganti.
+   -------------------------------------------------------------------------- */
+@property --ink-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  -webkit-mask-image: url('/brand/ink-mask.svg');
+  mask-image: url('/brand/ink-mask.svg');
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: var(--ink-size) var(--ink-size);
+  mask-size: var(--ink-size) var(--ink-size);
+  -webkit-mask-position: calc(var(--ink-x, 50vw) - var(--ink-size) / 2) calc(var(--ink-y, 0px) - var(--ink-size) / 2);
+  mask-position: calc(var(--ink-x, 50vw) - var(--ink-size) / 2) calc(var(--ink-y, 0px) - var(--ink-size) / 2);
+  animation: ink-spread 1.4s cubic-bezier(0.7, 0, 0.3, 1) both;
+}
+@keyframes ink-spread {
+  from { --ink-size: 0px; }
+  to { --ink-size: 460vmax; }
 }
 
 * {
@@ -499,4 +583,26 @@ body {
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ---- Auth di tema gelap ---- */
+.dark .auth-container { background: rgb(var(--c-surface)); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); }
+.dark .auth-title { color: rgb(var(--c-ink)); }
+.dark .auth-brand { color: rgb(var(--c-teal)); }
+.dark .auth-sub { color: rgb(var(--c-muted)); }
+.dark .auth-input { background: rgb(var(--c-gray-100)); color: rgb(var(--c-ink)); }
+.dark .auth-input:focus { background: rgb(var(--c-surface)); border-color: rgb(var(--c-teal)); }
+.dark .auth-eye { color: rgb(var(--c-muted)); }
+.dark .auth-eye:hover { background: rgba(255, 255, 255, 0.06); color: rgb(var(--c-ink)); }
+.dark .auth-btn { background: rgb(var(--c-brand)); }
+.dark .auth-btn:hover:not(:disabled) { background: rgb(var(--c-brand-dark)); }
+.dark .auth-link, .dark .auth-mobile-switch button { color: rgb(var(--c-navy)); }
+.dark .auth-link-right, .dark .auth-btn-link { color: rgb(var(--c-teal)); }
+.dark .auth-sent-icon { background: rgb(var(--c-sky)); color: rgb(var(--c-navy)); }
+.dark .auth-error { background: rgb(var(--c-red-50)); border-color: rgb(var(--c-red-200)); color: rgb(var(--c-red-700)); }
+.dark .auth-notice { background: rgb(var(--c-sky)); border-color: rgb(var(--c-line)); color: rgb(var(--c-navy)); }
+.dark .auth-legal { color: rgb(var(--c-muted)); }
+.dark .auth-legal a { color: rgb(var(--c-navy)); }
+@media (min-width: 768px) {
+  .dark .auth-form-container { background: rgb(var(--c-surface)); }
 }

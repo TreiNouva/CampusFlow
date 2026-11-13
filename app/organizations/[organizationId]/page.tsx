@@ -18,7 +18,7 @@ export default async function OrganizationOverviewPage(
 ) {
   const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [{ data: organization }, { data: membership }, { count: memberCount }, { data: projects }, { data: myProjects }, { data: members }] =
     await Promise.all([
@@ -51,6 +51,8 @@ export default async function OrganizationOverviewPage(
   const myRole = membership.role as OrgRole;
   const billing = await getOrgBilling(organization.id, myRole);
   const projectsFull = billing.projectLimit !== null && billing.activeProjects >= billing.projectLimit;
+  const activeProjects = (projects ?? []).filter((p: any) => p.status !== 'archived');
+  const archivedProjects = (projects ?? []).filter((p: any) => p.status === 'archived');
   const joinedIds = new Set((myProjects ?? []).map((p: any) => p.project_id));
   // Kandidat Project Manager: semua anggota organisasi (Ketua boleh menjadi PM jika mau atau perlu)
   const candidates = (members ?? [])
@@ -79,15 +81,15 @@ export default async function OrganizationOverviewPage(
         <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Project</h2>
-            {(!projects || projects.length === 0) && (
+            {activeProjects.length === 0 && (
               <Card>
                 <CardBody className="py-8 text-center text-sm text-muted">
-                  Belum ada project. Buat project pertama di panel sebelah kanan.
+                  {archivedProjects.length ? 'Tidak ada project aktif.' : 'Belum ada project.'} Buat project baru di panel sebelah kanan.
                 </CardBody>
               </Card>
             )}
             <div className="space-y-3">
-              {(projects ?? []).map((project: any) => {
+              {activeProjects.map((project: any) => {
                 const joined = joinedIds.has(project.id);
                 const total = project.tasks?.length ?? 0;
                 const done = project.tasks?.filter((t: any) => t.status === 'done').length ?? 0;
@@ -119,7 +121,7 @@ export default async function OrganizationOverviewPage(
                           <span className="text-xs font-semibold text-muted">{progress}%</span>
                         </div>
                         <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
-                          <div className="h-2 rounded-full bg-navy" style={{ width: `${progress}%` }} />
+                          <div className="h-2 rounded-full bg-brand" style={{ width: `${progress}%` }} />
                         </div>
                         <p className="mt-2 text-xs text-muted">
                           {done}/{total} task selesai
@@ -130,10 +132,27 @@ export default async function OrganizationOverviewPage(
                 );
               })}
             </div>
+            {archivedProjects.length > 0 && (
+              <details className="mt-6 rounded-card border border-line bg-surface">
+                <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-muted">
+                  Arsip ({archivedProjects.length})
+                </summary>
+                <ul className="divide-y divide-line border-t border-line">
+                  {archivedProjects.map((project: any) => (
+                    <li key={project.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                      <span className="truncate text-ink">{project.name}</span>
+                      {joinedIds.has(project.id)
+                        ? <Link href={`/projects/${project.id}`} className="shrink-0 font-semibold text-navy hover:underline">Lihat</Link>
+                        : <span className="shrink-0 text-xs text-muted">Diarsipkan</span>}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
 
           <div className="space-y-4">
-            <Link href={`/organizations/${organization.id}/billing`} className="block rounded-card border border-line bg-white p-4 transition hover:border-gray-300">
+            <Link href={`/organizations/${organization.id}/billing`} className="block rounded-card border border-line bg-surface p-4 transition hover:border-gray-300">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">Paket {PLAN_NAME[billing.plan]}</p>
                 <span className="text-xs font-semibold text-navy">Kelola →</span>
@@ -148,9 +167,9 @@ export default async function OrganizationOverviewPage(
                 <CardBody className="space-y-2 text-sm">
                   <h2 className="font-heading text-base font-bold text-ink">Kuota project penuh</h2>
                   <p className="text-muted">
-                    Paket Gratis berisi {billing.projectLimit} project aktif. Project yang sudah lewat tanggal selesai tidak dihitung.
+                    Paket Gratis berisi {billing.projectLimit} project aktif. Project yang sudah lewat tanggal selesai atau diarsipkan tidak dihitung.
                   </p>
-                  <Link href={`/organizations/${organization.id}/billing`} className="inline-block rounded-lg bg-navy px-4 py-2 font-semibold text-white hover:bg-navy-dark">
+                  <Link href={`/organizations/${organization.id}/billing`} className="inline-block rounded-lg bg-brand px-4 py-2 font-semibold text-white hover:bg-brand-dark">
                     Lihat paket Organisasi
                   </Link>
                 </CardBody>

@@ -18,7 +18,7 @@ export interface SessionUser {
  * Jika getClaims gagal/tidak tersedia, otomatis fallback ke `getUser()`.
  */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     const { data, error } = await supabase.auth.getClaims();
@@ -41,7 +41,7 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
   return data;
 });

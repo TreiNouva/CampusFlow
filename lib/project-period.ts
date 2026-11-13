@@ -4,7 +4,7 @@ import { periodError, type ProjectPeriod } from '@/lib/period';
 export { formatDay, periodError, type ProjectPeriod } from '@/lib/period';
 
 export async function getProjectPeriod(projectId: string): Promise<ProjectPeriod> {
-  const { data } = await createClient().from('projects').select('start_date, end_date').eq('id', projectId).single();
+  const { data } = await (await createClient()).from('projects').select('start_date, end_date').eq('id', projectId).single();
   return { start: data?.start_date ?? null, end: data?.end_date ?? null };
 }
 

@@ -3,10 +3,12 @@
 import { useState, useTransition, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  changePassword, deleteOrganization, deleteProject, leaveOrganization, updateOrganization, updateProfileName, updateProject,
+  changePassword, createDemoWorkspace, deleteOrganization, setProjectArchived, deleteProject, leaveOrganization, updateOrganization, updateProfileName, updateProject,
   type ManageResult,
 } from '@/actions/manage-actions';
 import { Input, Label, Textarea } from '@/components/ui/input';
+import { createClient as createBrowserClient } from '@/lib/supabase/client';
+import { resetRequestErrorMessage } from '@/lib/auth/reset-errors';
 import { cn } from '@/lib/utils';
 
 function useSubmit(action: (fd: FormData) => Promise<ManageResult>, { reset = false } = {}) {
@@ -36,7 +38,7 @@ function Status({ msg }: { msg: { ok: boolean; text: string } | null }) {
 
 function SubmitButton({ pending, children }: { pending: boolean; children: React.ReactNode }) {
   return (
-    <button type="submit" disabled={pending} className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark disabled:opacity-50">
+    <button type="submit" disabled={pending} className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50">
       {pending ? 'Menyimpan…' : children}
     </button>
   );
@@ -44,7 +46,7 @@ function SubmitButton({ pending, children }: { pending: boolean; children: React
 
 export function Panel({ title, description, children, danger }: { title: string; description?: string; children: React.ReactNode; danger?: boolean }) {
   return (
-    <section className={cn('rounded-card border bg-white p-5', danger ? 'border-red-200' : 'border-line')}>
+    <section className={cn('rounded-card border bg-surface p-5', danger ? 'border-red-200' : 'border-line')}>
       <h2 className={cn('font-heading text-lg font-bold', danger ? 'text-red-700' : 'text-ink')}>{title}</h2>
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       <div className="mt-4">{children}</div>
@@ -137,7 +139,7 @@ export function LeaveOrganizationButton({ organizationId, name }: { organization
   return (
     <div className="space-y-2">
       {!confirming ? (
-        <button type="button" onClick={() => setConfirming(true)} className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">
+        <button type="button" onClick={() => setConfirming(true)} className="rounded-lg border border-red-300 bg-surface px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">
           Keluar dari organisasi
         </button>
       ) : (
@@ -190,5 +192,74 @@ export function ChangePasswordForm() {
       </div>
       <div className="flex items-center gap-3"><SubmitButton pending={pending}>Ganti password</SubmitButton><Status msg={msg} /></div>
     </form>
+  );
+}
+
+/** Lupa password lama: kirim link reset ke email akun ini (alur yang sama dengan halaman masuk). */
+export function ForgotPasswordInline({ email }: { email: string }) {
+  const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [error, setError] = useState<string | null>(null);
+  async function send() {
+    setError(null);
+    setState('sending');
+    try {
+      const { error: e } = await createBrowserClient().auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      });
+      if (e) { setError(resetRequestErrorMessage(e)); setState('idle'); return; }
+      setState('sent');
+    } catch {
+      setError('Gagal terhubung. Periksa koneksi internet lalu coba lagi.');
+      setState('idle');
+    }
+  }
+  return (
+    <div className="mt-4 rounded-lg border border-line bg-gray-50 px-4 py-3 text-sm">
+      {state === 'sent' ? (
+        <p className="text-ink" role="status">
+          Link reset sudah dikirim ke <b>{email}</b>. Buka email itu (cek juga folder Spam), lalu buat password baru.
+        </p>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-muted">Lupa password saat ini?</span>
+          <button type="button" onClick={send} disabled={state === 'sending'}
+            className="font-semibold text-navy hover:underline disabled:opacity-50">
+            {state === 'sending' ? 'Mengirim…' : 'Kirim link reset ke email'}
+          </button>
+        </div>
+      )}
+      {error && <p className="mt-2 text-red-700" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+export function ArchiveProjectButton({ projectId, archived }: { projectId: string; archived: boolean }) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <div className="space-y-2">
+      <button type="button" disabled={pending}
+        onClick={() => { setError(null); start(async () => { const r = await setProjectArchived(projectId, !archived); if (!r.success) setError(r.error); else router.refresh(); }); }}
+        className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-gray-50 disabled:opacity-50">
+        {pending ? 'Memproses…' : archived ? 'Buka arsip project' : 'Arsipkan project'}
+      </button>
+      {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+export function DemoWorkspaceButton({ className }: { className?: string }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <div className={className}>
+      <button type="button" disabled={pending}
+        onClick={() => { setError(null); start(async () => { const r = await createDemoWorkspace(); if (r && !r.success) setError(r.error); }); }}
+        className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-navy hover:bg-gray-50 disabled:opacity-50">
+        {pending ? 'Menyiapkan data contoh…' : 'Coba dengan data contoh'}
+      </button>
+      {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}
+    </div>
   );
 }

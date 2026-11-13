@@ -22,7 +22,7 @@ export default async function JoinPage(props: { params: Promise<{ token: string 
   // Format token tidak valid -> tidak perlu bertanya ke database
   let preview: Preview = { valid: false, reason: 'Link undangan tidak valid.' };
   if (/^[A-Za-z0-9]{20,100}$/.test(token)) {
-    const { data } = await createClient().rpc('invite_preview', { p_token: token });
+    const { data } = await (await createClient()).rpc('invite_preview', { p_token: token });
     if (data) preview = data as Preview;
   }
 

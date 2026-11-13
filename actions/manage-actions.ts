@@ -26,7 +26,7 @@ export async function updateProject(formData: FormData): Promise<ManageResult> {
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const d = parsed.data;
   if (d.startDate && d.endDate && d.endDate < d.startDate) return { success: false, error: 'Tanggal selesai tidak boleh sebelum tanggal mulai.' };
-  const { error } = await createClient().rpc('update_project', {
+  const { error } = await (await createClient()).rpc('update_project', {
     p_project: d.projectId, p_name: d.name, p_description: d.description, p_start: d.startDate, p_end: d.endDate,
   });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menyimpan project. Pastikan migrasi 0006 sudah dijalankan.') };
@@ -37,7 +37,7 @@ export async function updateProject(formData: FormData): Promise<ManageResult> {
 export async function deleteProject(projectId: string, confirmName: string, organizationId: string): Promise<ManageResult> {
   await requireUser();
   if (!z.string().uuid().safeParse(projectId).success) return { success: false, error: 'Project tidak valid.' };
-  const { error } = await createClient().rpc('delete_project', { p_project: projectId, p_confirm_name: confirmName });
+  const { error } = await (await createClient()).rpc('delete_project', { p_project: projectId, p_confirm_name: confirmName });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menghapus project.') };
   revalidatePath(`/organizations/${organizationId}`, 'layout');
   redirect(`/organizations/${organizationId}`);
@@ -54,7 +54,7 @@ export async function updateOrganization(formData: FormData): Promise<ManageResu
   const parsed = orgSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   const d = parsed.data;
-  const { error } = await createClient().rpc('update_organization', { p_org: d.organizationId, p_name: d.name, p_description: d.description });
+  const { error } = await (await createClient()).rpc('update_organization', { p_org: d.organizationId, p_name: d.name, p_description: d.description });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menyimpan organisasi. Pastikan migrasi 0006 sudah dijalankan.') };
   revalidatePath(`/organizations/${d.organizationId}`, 'layout');
   revalidatePath('/dashboard');
@@ -64,7 +64,7 @@ export async function updateOrganization(formData: FormData): Promise<ManageResu
 export async function deleteOrganization(organizationId: string, confirmName: string): Promise<ManageResult> {
   await requireUser();
   if (!z.string().uuid().safeParse(organizationId).success) return { success: false, error: 'Organisasi tidak valid.' };
-  const { error } = await createClient().rpc('delete_organization', { p_org: organizationId, p_confirm_name: confirmName });
+  const { error } = await (await createClient()).rpc('delete_organization', { p_org: organizationId, p_confirm_name: confirmName });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal menghapus organisasi.') };
   revalidatePath('/dashboard');
   redirect('/dashboard');
@@ -73,7 +73,7 @@ export async function deleteOrganization(organizationId: string, confirmName: st
 export async function leaveOrganization(organizationId: string): Promise<ManageResult> {
   await requireUser();
   if (!z.string().uuid().safeParse(organizationId).success) return { success: false, error: 'Organisasi tidak valid.' };
-  const { error } = await createClient().rpc('leave_organization', { p_org: organizationId });
+  const { error } = await (await createClient()).rpc('leave_organization', { p_org: organizationId });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal keluar dari organisasi.') };
   revalidatePath('/dashboard');
   redirect('/dashboard');
@@ -84,7 +84,7 @@ export async function updateProfileName(formData: FormData): Promise<ManageResul
   const user = await requireUser();
   const parsed = z.string().trim().min(2, 'Nama minimal 2 karakter').max(80, 'Nama maksimal 80 karakter').safeParse(formData.get('fullName'));
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Nama tidak valid' };
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('profiles').update({ full_name: parsed.data }).eq('id', user.id);
   if (error) return { success: false, error: 'Gagal menyimpan nama.' };
   await supabase.auth.updateUser({ data: { full_name: parsed.data } });
@@ -106,7 +106,7 @@ export async function changePassword(formData: FormData): Promise<ManageResult> 
   const user = await requireUser();
   const parsed = passwordSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: parsed.data.currentPassword });
   if (signInError) return { success: false, error: 'Password saat ini salah.' };
   const { error } = await supabase.auth.updateUser({ password: parsed.data.newPassword });
@@ -115,4 +115,24 @@ export async function changePassword(formData: FormData): Promise<ManageResult> 
     return { success: false, error: 'Gagal mengganti password. Coba lagi.' };
   }
   return { success: true };
+}
+
+/** Arsipkan / buka arsip project. Project arsip read-only dan tidak dihitung dalam kuota project aktif. */
+export async function setProjectArchived(projectId: string, archived: boolean): Promise<ManageResult> {
+  await requireUser();
+  if (!z.string().uuid().safeParse(projectId).success) return { success: false, error: 'Project tidak valid.' };
+  const { error } = await (await createClient()).rpc('set_project_archived', { p_project: projectId, p_archived: archived });
+  if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal mengubah status arsip. Pastikan migrasi 0007 sudah dijalankan.') };
+  revalidatePath(`/projects/${projectId}`, 'layout');
+  revalidatePath('/organizations', 'layout');
+  return { success: true };
+}
+
+/** Buat organisasi contoh berisi data dummy untuk mencoba fitur (sekali per akun). */
+export async function createDemoWorkspace(): Promise<ManageResult> {
+  await requireUser();
+  const { data, error } = await (await createClient()).rpc('create_demo_workspace');
+  if (error || !data) return { success: false, error: error ? rpcErrorMessage(error, 'Gagal membuat data contoh. Pastikan migrasi 0007 sudah dijalankan.') : 'Gagal membuat data contoh.' };
+  revalidatePath('/', 'layout');
+  redirect(`/organizations/${data as string}`);
 }

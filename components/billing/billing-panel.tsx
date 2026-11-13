@@ -43,7 +43,7 @@ function Usage({ label, used, limit }: { label: string; used: number; limit: num
       </div>
       {limit !== null && (
         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-gray-100">
-          <div className={cn('h-full rounded-full', full ? 'bg-red-600' : pct >= 80 ? 'bg-orange' : 'bg-navy')} style={{ width: `${pct}%` }} />
+          <div className={cn('h-full rounded-full', full ? 'bg-red-600' : pct >= 80 ? 'bg-orange' : 'bg-brand')} style={{ width: `${pct}%` }} />
         </div>
       )}
       {full && <p className="mt-1 text-xs text-red-700">Kuota penuh: penambahan baru akan ditolak.</p>}
@@ -96,7 +96,7 @@ export function BillingPanel(props: BillingPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-3 rounded-card border border-[#F1DDBE] bg-orange-light px-4 py-3 text-sm text-[#7A4A0C]">
+      <div className="flex items-start gap-3 rounded-card border border-warn-line bg-orange-light px-4 py-3 text-sm text-warn-ink">
         <Icon name="alert" size={18} className="mt-0.5 shrink-0" />
         <p>
           <b>Mode demo.</b> Pembayaran belum terhubung ke payment gateway. Kode QRIS masih placeholder, dan tombol
@@ -111,7 +111,7 @@ export function BillingPanel(props: BillingPanelProps) {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         {/* Paket saat ini */}
-        <section className="rounded-card border border-line bg-white p-5 lg:col-span-2" aria-labelledby="current-plan">
+        <section className="rounded-card border border-line bg-surface p-5 lg:col-span-2" aria-labelledby="current-plan">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Paket saat ini</p>
           <div className="mt-1 flex items-center gap-2">
             <h2 id="current-plan" className="font-heading text-2xl font-bold text-navy">{PLAN_NAME[props.plan]}</h2>
@@ -138,7 +138,7 @@ export function BillingPanel(props: BillingPanelProps) {
         </section>
 
         {/* Konfigurasi / checkout */}
-        <section ref={panelRef} className="scroll-mt-20 rounded-card border border-line bg-white p-5 lg:col-span-3" aria-label="Upgrade paket">
+        <section ref={panelRef} className="scroll-mt-20 rounded-card border border-line bg-surface p-5 lg:col-span-3" aria-label="Upgrade paket">
           {!props.canManage ? (
             <div className="flex h-full flex-col justify-center gap-2 text-sm text-gray-600">
               <h2 className="font-heading text-lg font-bold text-ink">Butuh kuota lebih?</h2>
@@ -152,7 +152,7 @@ export function BillingPanel(props: BillingPanelProps) {
               <div className="mt-4 inline-flex rounded-lg bg-gray-100 p-1" role="radiogroup" aria-label="Periode tagihan">
                 {(['monthly', 'yearly'] as const).map((c) => (
                   <button key={c} type="button" role="radio" aria-checked={cycle === c} onClick={() => setCycle(c)}
-                    className={cn('rounded-md px-3.5 py-1.5 text-sm font-medium transition', cycle === c ? 'bg-white font-semibold text-navy shadow-sm' : 'text-gray-600')}>
+                    className={cn('rounded-md px-3.5 py-1.5 text-sm font-medium transition', cycle === c ? 'bg-surface font-semibold text-navy shadow-sm' : 'text-gray-600')}>
                     {c === 'monthly' ? 'Bulanan' : 'Tahunan · gratis 2 bulan'}
                   </button>
                 ))}
@@ -183,7 +183,7 @@ export function BillingPanel(props: BillingPanelProps) {
               </dl>
 
               <button type="button" onClick={() => { setError(null); setStep('checkout'); }} disabled={isCurrent || props.unavailable}
-                className="mt-5 w-full rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-dark disabled:cursor-not-allowed disabled:opacity-50">
+                className="mt-5 w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50">
                 {isCurrent ? 'Ini paket kamu saat ini' : 'Lanjut ke pembayaran'}
               </button>
             </div>
@@ -205,7 +205,7 @@ export function BillingPanel(props: BillingPanelProps) {
       </div>
 
       {/* Bandingkan paket */}
-      <section className="rounded-card border border-line bg-white p-5" aria-label="Perbandingan paket">
+      <section className="rounded-card border border-line bg-surface p-5" aria-label="Perbandingan paket">
         <h2 className="font-heading text-lg font-bold text-ink">Semua paket</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <PlanCard title="Gratis" price="Rp0" lines={[`${FREE_MEMBERS} anggota`, `${FREE_PROJECTS} project aktif`, 'Semua fitur inti']} current={props.plan === 'free'} />
@@ -221,7 +221,7 @@ export function BillingPanel(props: BillingPanelProps) {
       </section>
 
       {props.canManage && (
-        <section className="rounded-card border border-line bg-white" aria-label="Riwayat pembayaran">
+        <section className="rounded-card border border-line bg-surface" aria-label="Riwayat pembayaran">
           <h2 className="border-b border-line px-5 py-3 font-heading text-lg font-bold text-ink">Riwayat pembayaran</h2>
           {props.payments.length === 0 ? (
             <p className="px-5 py-4 text-sm text-muted">Belum ada pembayaran.</p>
@@ -249,7 +249,7 @@ function PlanCard({ title, price, lines, current, action }: { title: string; pri
     <div className={cn('rounded-lg border p-4', current ? 'border-navy bg-sky/40' : 'border-line')}>
       <div className="flex items-center justify-between">
         <p className="font-semibold text-ink">{title}</p>
-        {current && <span className="rounded-full bg-navy px-2 py-0.5 text-[11px] font-semibold text-white">Paket kamu</span>}
+        {current && <span className="rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-white">Paket kamu</span>}
       </div>
       <p className="mt-1 font-heading text-lg font-bold text-navy">{price}</p>
       <ul className="mt-2 space-y-1">
@@ -305,7 +305,7 @@ function Checkout({ amount, cycle, capacity, orgName, pending, error, onPaid, on
           {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}
           <div className="mt-auto flex flex-wrap gap-2 pt-4">
             <button type="button" onClick={onPaid} disabled={pending || left === 0}
-              className="flex-1 rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-dark disabled:opacity-50">
+              className="flex-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50">
               {pending ? 'Memeriksa pembayaran…' : left === 0 ? 'Kode kedaluwarsa' : 'Saya sudah bayar'}
             </button>
             <button type="button" onClick={onBack} disabled={pending} className="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:bg-gray-50">Batal</button>

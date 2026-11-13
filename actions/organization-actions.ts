@@ -24,7 +24,7 @@ export async function createOrganization(formData: FormData): Promise<ActionResu
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   // Fungsi database membuat organisasi + menjadikan pembuat sebagai Ketua dalam satu transaksi.
   const { data, error } = await supabase.rpc('create_organization', {
     p_name: parsed.data.name,

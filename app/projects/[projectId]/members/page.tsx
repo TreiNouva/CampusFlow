@@ -18,7 +18,7 @@ import type { Invite, OrgRole, ProjectRole } from '@/types/database';
 export default async function ProjectMembersPage(props: { params: Promise<{ projectId: string }> }) {
   const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [{ data: project }, { data: membership }, { data: members }, { data: divisions }, { data: invites }] =
     await Promise.all([

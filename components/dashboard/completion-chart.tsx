@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { addDays, parseDay } from '@/lib/dates';
-import { STATUS_LABEL } from '@/lib/utils';
+import { STATUS_LABEL, cn } from '@/lib/utils';
 import type { TaskStatus } from '@/types/database';
 
 const STATUS_FILL: Record<TaskStatus, string> = {
@@ -23,15 +23,15 @@ export function CompletionChart({
       <CardBody>
         <p className="text-xs font-semibold text-muted">Task selesai · 14 hari terakhir</p>
         <svg viewBox={`0 0 ${W} ${H + 18}`} className="mt-1 w-full" role="img" aria-label="Grafik task selesai per hari">
-          <line x1="0" x2={W} y1={H} y2={H} stroke="#E5E7EB" />
+          <line x1="0" x2={W} y1={H} y2={H} className="stroke-line" />
           {counts.map((c, i) => {
             const h = (c / max) * (H - 14);
             const x = i * (bw + gap);
             return (
               <g key={days[i]}>
-                <rect className="anim-grow-y" style={{ transformBox: 'fill-box', animationDelay: `${i * 30}ms` }} x={x} y={H - Math.max(h, c ? 2 : 0)} width={bw} height={Math.max(h, c ? 2 : 0)} rx="3" fill={days[i] === today ? '#12365E' : '#9DB7CC'} />
-                {c > 0 && <text x={x + bw / 2} y={H - h - 3} textAnchor="middle" fontSize="9" fill="#12365E" fontWeight="700">{c}</text>}
-                {(i % 2 === 1 || i === 13) && <text x={x + bw / 2} y={H + 12} textAnchor="middle" fontSize="8" fill="#5F6B7A">{parseDay(days[i]).getUTCDate()}</text>}
+                <rect style={{ transformBox: 'fill-box', animationDelay: `${i * 30}ms` }} x={x} y={H - Math.max(h, c ? 2 : 0)} width={bw} height={Math.max(h, c ? 2 : 0)} rx="3" className={cn("anim-grow-y", days[i] === today ? "fill-navy" : "fill-[#9DB7CC]")} />
+                {c > 0 && <text x={x + bw / 2} y={H - h - 3} textAnchor="middle" fontSize="9" className="fill-navy" fontWeight="700">{c}</text>}
+                {(i % 2 === 1 || i === 13) && <text x={x + bw / 2} y={H + 12} textAnchor="middle" fontSize="8" className="fill-muted">{parseDay(days[i]).getUTCDate()}</text>}
               </g>
             );
           })}

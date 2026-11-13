@@ -55,7 +55,7 @@ export async function addOrganizationMember(formData: FormData): Promise<ActionR
   const targetId = await findUserIdByEmail(parsed.data.email);
   if (!targetId) return { success: false, error: 'User dengan email tersebut belum terdaftar di CampusFlow.' };
 
-  const { error } = await createClient().rpc('set_org_member', {
+  const { error } = await (await createClient()).rpc('set_org_member', {
     p_org: parsed.data.organizationId,
     p_user: targetId,
     p_role: parsed.data.role,
@@ -75,7 +75,7 @@ export async function changeOrganizationMemberRole(formData: FormData): Promise<
   });
   if (!parsed.success) return { success: false, error: firstError(parsed) };
 
-  const { error } = await createClient().rpc('set_org_member', {
+  const { error } = await (await createClient()).rpc('set_org_member', {
     p_org: parsed.data.organizationId,
     p_user: parsed.data.userId,
     p_role: parsed.data.role,
@@ -94,7 +94,7 @@ export async function removeOrganizationMember(formData: FormData): Promise<Acti
   });
   if (!parsed.success) return { success: false, error: firstError(parsed) };
 
-  const { error } = await createClient().rpc('remove_org_member', {
+  const { error } = await (await createClient()).rpc('remove_org_member', {
     p_org: parsed.data.organizationId,
     p_user: parsed.data.userId,
   });
@@ -113,7 +113,7 @@ export async function transferKetua(formData: FormData): Promise<ActionResult> {
   });
   if (!parsed.success) return { success: false, error: firstError(parsed) };
 
-  const { error } = await createClient().rpc('transfer_ketua', {
+  const { error } = await (await createClient()).rpc('transfer_ketua', {
     p_org: parsed.data.organizationId,
     p_new_ketua: parsed.data.userId,
   });
@@ -139,7 +139,7 @@ export async function addProjectMember(formData: FormData): Promise<ActionResult
   const targetId = await findUserIdByEmail(parsed.data.email);
   if (!targetId) return { success: false, error: 'User dengan email tersebut belum terdaftar di CampusFlow.' };
 
-  const { error } = await createClient().rpc('set_project_member', {
+  const { error } = await (await createClient()).rpc('set_project_member', {
     p_project: parsed.data.projectId,
     p_user: targetId,
     p_role: parsed.data.role,
@@ -162,7 +162,7 @@ export async function changeProjectMember(formData: FormData): Promise<ActionRes
   });
   if (!parsed.success) return { success: false, error: firstError(parsed) };
 
-  const { error } = await createClient().rpc('set_project_member', {
+  const { error } = await (await createClient()).rpc('set_project_member', {
     p_project: parsed.data.projectId,
     p_user: parsed.data.userId,
     p_role: parsed.data.role,
@@ -183,7 +183,7 @@ export async function removeProjectMember(formData: FormData): Promise<ActionRes
   });
   if (!parsed.success) return { success: false, error: firstError(parsed) };
 
-  const { error } = await createClient().rpc('remove_project_member', {
+  const { error } = await (await createClient()).rpc('remove_project_member', {
     p_project: parsed.data.projectId,
     p_user: parsed.data.userId,
   });
@@ -200,7 +200,7 @@ export async function joinProject(formData: FormData): Promise<ActionResult> {
   const organizationId = String(formData.get('organizationId') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(projectId)) return { success: false, error: 'Project tidak valid.' };
 
-  const { error } = await createClient().rpc('join_project', { p_project: projectId });
+  const { error } = await (await createClient()).rpc('join_project', { p_project: projectId });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal bergabung ke project.') };
 
   if (organizationId) revalidateOrg(organizationId);

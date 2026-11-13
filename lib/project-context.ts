@@ -12,6 +12,7 @@ export interface ProjectContext {
     description: string | null;
     start_date: string | null;
     end_date: string | null;
+    status: string | null;
     organization: { id: string; name: string } | null;
   };
   myRole: ProjectRole;
@@ -29,9 +30,9 @@ export interface ProjectContext {
  */
 export const getProjectContext = cache(async (projectId: string): Promise<ProjectContext> => {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ data: project }, { data: membership }] = await Promise.all([
-    supabase.from('projects').select('id, name, description, start_date, end_date, organization:organizations(id, name)').eq('id', projectId).single(),
+    supabase.from('projects').select('id, name, description, start_date, end_date, status, organization:organizations(id, name)').eq('id', projectId).single(),
     supabase.from('project_members').select('role, division_id, division:project_divisions(name)').eq('project_id', projectId).eq('user_id', user.id).maybeSingle(),
   ]);
   if (!project || !membership) notFound();

@@ -13,10 +13,13 @@ import { looksLikeTeamAdmin } from '@/lib/admin-access';
  */
 export async function AppShell({ children, project, org }: { children: React.ReactNode; project?: ProjectContext; org?: { id: string; name: string; role: string } }) {
   const user = await requireUser();
-  const [profile, { data: orgRows }, teamAdmin] = await Promise.all([
+  const supabase = await createClient();
+  const [profile, { data: orgRows }, teamAdmin, { data: notifRows }, { count: unread }] = await Promise.all([
     getCurrentProfile(),
-    createClient().from('organization_members').select('organization:organizations(id, name)').eq('user_id', user.id),
+    supabase.from('organization_members').select('organization:organizations(id, name)').eq('user_id', user.id),
     looksLikeTeamAdmin(),
+    supabase.from('notifications').select('id, title, body, link, is_read, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
+    supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_read', false),
   ]);
 
   const organizations = ((orgRows ?? []) as any[])
@@ -42,7 +45,10 @@ export async function AppShell({ children, project, org }: { children: React.Rea
       { href: `${base}/members`, label: 'Anggota & Divisi', icon: 'users' },
       { href: `${base}/stats`, label: 'Statistik', icon: 'chart' },
       { href: `${base}/settings/notifications`, label: 'Notifikasi Email', icon: 'bell' },
-      ...(project.canManage ? [{ href: `${base}/settings`, label: 'Pengaturan Project', icon: 'gear' as const, exact: true }] : []),
+      ...(project.canManage ? [
+        { href: `${base}/laporan`, label: 'Laporan (LPJ)', icon: 'file' as const },
+        { href: `${base}/settings`, label: 'Pengaturan Project', icon: 'gear' as const, exact: true },
+      ] : []),
     ];
     sections = [
       { title: 'Project', items: main },
@@ -96,6 +102,7 @@ export async function AppShell({ children, project, org }: { children: React.Rea
       bottomNav={bottomNav}
       user={{ name: profile?.full_name || profile?.email || 'Pengguna', email: profile?.email ?? '' }}
       showTour={profile ? !profile.onboarded_at : false}
+      notifications={{ items: (notifRows ?? []) as any, unread: unread ?? 0 }}
     >
       {children}
     </ShellFrame>

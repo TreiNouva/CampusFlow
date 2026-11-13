@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 export default async function OrganizationSettingsPage(props: { params: Promise<{ organizationId: string }> }) {
   const { organizationId } = await props.params;
   const user = await requireUser();
-  const { data } = await createClient()
+  const { data } = await (await createClient())
     .from('organization_members')
     .select('role, organization:organizations(id, name, description)')
     .eq('organization_id', organizationId)

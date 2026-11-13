@@ -18,7 +18,7 @@ export default async function OrganizationMembersPage(
 ) {
   const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [{ data: organization }, { data: myMembership }, { data: members }, { data: invites }] = await Promise.all([
     supabase.from('organizations').select('id, name').eq('id', params.organizationId).single(),
@@ -63,7 +63,7 @@ export default async function OrganizationMembersPage(
         </Link>
         <h1 className="font-heading text-2xl font-bold text-ink">Anggota & Undangan</h1>
         {seatsLeft !== null && (
-          <p className={`mt-2 inline-flex flex-wrap items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${seatsLeft === 0 ? 'bg-red-50 text-red-700' : seatsLeft <= 3 ? 'bg-orange-light text-[#7A4A0C]' : 'bg-gray-100 text-gray-700'}`}>
+          <p className={`mt-2 inline-flex flex-wrap items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${seatsLeft === 0 ? 'bg-red-50 text-red-700' : seatsLeft <= 3 ? 'bg-orange-light text-warn-ink' : 'bg-gray-100 text-gray-700'}`}>
             {billing.memberCount}/{billing.memberLimit} anggota ({PLAN_NAME[billing.plan]}) ·{' '}
             {seatsLeft === 0 ? 'kuota penuh, undangan baru akan ditolak.' : `sisa ${seatsLeft} slot.`}
             <Link href={`/organizations/${organization.id}/billing`} className="font-semibold underline-offset-2 hover:underline">Tambah kuota</Link>

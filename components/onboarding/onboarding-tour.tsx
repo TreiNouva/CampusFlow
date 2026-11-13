@@ -94,7 +94,7 @@ export function OnboardingTour({ initialOpen, inProject }: { initialOpen: boolea
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="tour-title">
       <div className="animate-fade-in absolute inset-0 bg-[#0B1B2E]/45" onClick={finish} aria-hidden />
-      <div className="anim-rise relative w-full max-w-md rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
+      <div className="anim-rise relative w-full max-w-md rounded-t-2xl bg-surface shadow-2xl sm:rounded-2xl">
         <div className="flex items-center justify-between px-5 pt-4">
           <span className="text-xs font-medium text-muted">Panduan {step + 1} dari {STEPS.length}</span>
           <button type="button" onClick={finish} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-muted hover:bg-gray-100 hover:text-ink">
@@ -117,7 +117,7 @@ export function OnboardingTour({ initialOpen, inProject }: { initialOpen: boolea
         <div className="flex items-center justify-between gap-3 px-5 pb-5 pt-4">
           <div className="flex gap-1.5" aria-hidden>
             {STEPS.map((_, i) => (
-              <span key={i} className={cn('h-1.5 rounded-full transition-all', i === step ? 'w-5 bg-navy' : 'w-1.5 bg-gray-200')} />
+              <span key={i} className={cn('h-1.5 rounded-full transition-all', i === step ? 'w-5 bg-brand' : 'w-1.5 bg-gray-200')} />
             ))}
           </div>
           <div className="flex gap-2">
@@ -127,7 +127,7 @@ export function OnboardingTour({ initialOpen, inProject }: { initialOpen: boolea
               </button>
             )}
             <button type="button" onClick={() => (last ? finish() : setStep(step + 1))} autoFocus
-              className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark">
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">
               {last ? 'Mulai pakai' : 'Lanjut'}
             </button>
           </div>

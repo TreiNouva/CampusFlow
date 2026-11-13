@@ -18,7 +18,7 @@ import type { TaskStatus } from '@/types/database';
 export default async function ProjectStatsPage(props: { params: Promise<{ projectId: string }> }) {
   const params = await props.params;
   const { project, myRole } = await getProjectContext(params.projectId);
-  const supabase = createClient();
+  const supabase = await createClient();
   const today = todayJakarta();
   const pid = project.id;
   const showBudget = canViewBudgetRole(myRole);

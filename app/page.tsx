@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import { ThemedLogo, ThemeToggle } from '@/components/theme/theme';
 import { InterestForm } from '@/components/interest/interest-form';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -49,11 +49,11 @@ export default async function LandingPage() {
   const user = await getCurrentUser();
 
   return (
-    <div className="min-h-screen bg-white text-ink">
+    <div className="min-h-screen bg-surface text-ink">
       {/* Navigasi atas */}
-      <header className="sticky top-0 z-20 border-b border-line bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link href="/" aria-label="CampusFlow"><Image src="/brand/campusflow-logo-horizontal.svg" alt="CampusFlow" width={156} height={40} priority /></Link>
+          <Link href="/" aria-label="CampusFlow"><ThemedLogo width={156} height={40} priority /></Link>
           <nav className="hidden items-center gap-6 text-sm text-gray-600 md:flex" aria-label="Bagian halaman">
             <a href="#fitur" className="hover:text-ink">Fitur</a>
             <a href="#cara-mulai" className="hover:text-ink">Cara mulai</a>
@@ -62,12 +62,13 @@ export default async function LandingPage() {
             <a href="#daftar" className="hover:text-ink">Daftar minat</a>
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {user ? (
-              <Link href="/dashboard" className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark">Buka dashboard</Link>
+              <Link href="/dashboard" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Buka dashboard</Link>
             ) : (
               <>
                 <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-navy hover:bg-gray-50">Masuk</Link>
-                <Link href="/register" className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark">Daftar gratis</Link>
+                <Link href="/register" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Daftar gratis</Link>
               </>
             )}
           </div>
@@ -75,10 +76,10 @@ export default async function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="border-b border-line bg-[#F6F8FA]">
+      <section className="border-b border-line bg-canvas">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 md:py-20 lg:grid-cols-2">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 text-xs font-medium text-muted">
+            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
               Untuk BEM, himpunan, UKM, dan panitia event
             </p>
             <h1 className="mt-5 font-heading text-4xl font-bold leading-tight text-navy sm:text-5xl">
@@ -89,10 +90,10 @@ export default async function LandingPage() {
               pembagian tugas, kalender, pengumuman, dokumen, dan dana organisasi.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={user ? '/dashboard' : '/register'} className="inline-flex items-center gap-2 rounded-lg bg-navy px-5 py-3 text-sm font-semibold text-white hover:bg-navy-dark">
+              <Link href={user ? '/dashboard' : '/register'} className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-dark">
                 {user ? 'Buka dashboard' : 'Mulai gratis'} <Icon name="arrowRight" size={16} />
               </Link>
-              <a href="#fitur" className="rounded-lg border border-line bg-white px-5 py-3 text-sm font-semibold text-navy hover:bg-gray-50">
+              <a href="#fitur" className="rounded-lg border border-line bg-surface px-5 py-3 text-sm font-semibold text-navy hover:bg-gray-50">
                 Lihat isi aplikasinya
               </a>
             </div>
@@ -108,7 +109,7 @@ export default async function LandingPage() {
           <SectionTitle eyebrow="Setelah login" title="Ini yang akan kamu temui di dalam" desc="Setiap menu punya satu tugas yang jelas. Kamu juga akan dipandu tur singkat saat pertama kali masuk, dan bisa melewatinya." />
           <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {SCREENS.map((s) => (
-              <li key={s.title} className="rounded-card border border-line bg-white p-5">
+              <li key={s.title} className="rounded-card border border-line bg-surface p-5">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky text-navy"><Icon name={s.icon} /></span>
                 <h3 className="mt-4 font-heading text-lg font-bold text-ink">{s.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{s.desc}</p>
@@ -120,13 +121,13 @@ export default async function LandingPage() {
       </section>
 
       {/* Cara mulai */}
-      <section id="cara-mulai" className="scroll-mt-16 border-y border-line bg-[#F6F8FA]">
+      <section id="cara-mulai" className="scroll-mt-16 border-y border-line bg-canvas">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <SectionTitle eyebrow="Cara mulai" title="Siap dipakai dalam 4 langkah" />
           <ol className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((s, i) => (
-              <li key={s.title} className="rounded-card border border-line bg-white p-5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">{i + 1}</span>
+              <li key={s.title} className="rounded-card border border-line bg-surface p-5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">{i + 1}</span>
                 <h3 className="mt-4 font-semibold text-ink">{s.title}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-gray-600">{s.desc}</p>
               </li>
@@ -152,13 +153,13 @@ export default async function LandingPage() {
       </section>
 
       {/* Paket */}
-      <section id="paket" className="scroll-mt-16 border-y border-line bg-[#F6F8FA]">
+      <section id="paket" className="scroll-mt-16 border-y border-line bg-canvas">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <SectionTitle eyebrow="Paket" title="Bayar sesuai ukuran organisasimu"
             desc={`Tidak perlu loncat ke paket besar hanya karena anggota bertambah sedikit. Di paket Organisasi, kuota anggota ditambah per ${SEAT_PACK} orang.`} />
           <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
             {PLANS.map((p) => (
-              <li key={p.key} className={cn('flex flex-col rounded-card border bg-white p-6', p.highlight ? 'border-navy' : 'border-line')}>
+              <li key={p.key} className={cn('flex flex-col rounded-card border bg-surface p-6', p.highlight ? 'border-navy' : 'border-line')}>
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-heading text-lg font-bold text-ink">{p.name}</h3>
                   {p.highlight && <span className="rounded-full bg-sky px-2.5 py-0.5 text-xs font-semibold text-navy">Paling fleksibel</span>}
@@ -179,7 +180,7 @@ export default async function LandingPage() {
               </li>
             ))}
           </ul>
-          <div className="mx-auto mt-6 max-w-3xl rounded-card border border-line bg-white px-5 py-4 text-sm text-gray-600">
+          <div className="mx-auto mt-6 max-w-3xl rounded-card border border-line bg-surface px-5 py-4 text-sm text-gray-600">
             <strong className="text-ink">Contoh:</strong> himpunan dengan 38 anggota cukup memakai paket Organisasi ({ORG_BASE_MEMBERS} anggota)
             ditambah satu tambahan {SEAT_PACK} anggota: {rupiah(planPrice(1, 'monthly'))}/bulan, atau {rupiah(planPrice(1, 'yearly'))}/tahun jika bayar tahunan.
             Tidak perlu membayar paket Kampus.
@@ -192,7 +193,7 @@ export default async function LandingPage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.3fr]">
           <SectionTitle eyebrow="Pengguna awal" title="Tertarik memakai CampusFlow?" align="left"
             desc="Tinggalkan kontakmu. Kami kabari saat paket berbayar dibuka, dan organisasi pertama mendapat pendampingan gratis." />
-          <div className="rounded-card border border-line bg-white p-5 sm:p-6">
+          <div className="rounded-card border border-line bg-surface p-5 sm:p-6">
             <InterestForm source="web" />
           </div>
         </div>
@@ -217,13 +218,13 @@ export default async function LandingPage() {
       </section>
 
       {/* Ajakan akhir */}
-      <section className="bg-navy">
+      <section className="bg-brand">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 py-12 sm:px-6 md:flex-row md:items-center">
           <div>
             <h2 className="font-heading text-2xl font-bold text-white">Siap merapikan organisasimu?</h2>
             <p className="mt-1 text-sm text-white/70">Daftar dalam satu menit. Tur singkat akan memandumu setelah login.</p>
           </div>
-          <Link href={user ? '/dashboard' : '/register'} className="rounded-lg bg-white px-5 py-3 text-sm font-semibold text-navy hover:bg-gray-100">
+          <Link href={user ? '/dashboard' : '/register'} className="rounded-lg bg-surface px-5 py-3 text-sm font-semibold text-navy hover:bg-gray-100">
             {user ? 'Buka dashboard' : 'Daftar gratis'}
           </Link>
         </div>
@@ -259,7 +260,7 @@ function AppPreview() {
   ];
   return (
     <div className="relative" aria-label="Contoh tampilan aplikasi" role="img">
-      <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_20px_60px_-20px_rgba(18,54,94,0.25)]">
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_20px_60px_-20px_rgba(18,54,94,0.25)]">
         <div className="flex items-center gap-1.5 border-b border-line px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-gray-200" /><span className="h-2.5 w-2.5 rounded-full bg-gray-200" /><span className="h-2.5 w-2.5 rounded-full bg-gray-200" />
           <span className="ml-3 truncate text-[11px] text-muted">campusflow · Festival Teknologi 2026</span>
@@ -281,7 +282,7 @@ function AppPreview() {
                 </div>
               ))}
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full w-[64%] rounded-full bg-navy" /></div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full w-[64%] rounded-full bg-brand" /></div>
             <div className="rounded-lg border border-line">
               <p className="border-b border-line px-2.5 py-1.5 text-[10px] font-semibold text-ink">Perlu perhatian</p>
               {tasks.map((t) => (

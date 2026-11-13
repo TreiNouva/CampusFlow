@@ -82,7 +82,7 @@ export function TaskBoard({
           { label: 'Jatuh tempo ≤ 3 hari', value: dueSoon, tone: 'text-orange' },
           { label: 'Telat', value: late, tone: late ? 'text-red-600' : 'text-muted' },
         ].map((s) => (
-          <div key={s.label} className="anim-rise rounded-card border border-gray-100 bg-white px-4 py-3 shadow-sm">
+          <div key={s.label} className="anim-rise rounded-card border border-gray-100 bg-surface px-4 py-3 shadow-sm">
             <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{s.label}</p>
             <p className={cn('font-heading text-xl font-bold', s.tone)}>{s.value}</p>
           </div>
@@ -106,7 +106,7 @@ export function TaskBoard({
         </label>
         <div className="ml-auto inline-flex rounded-lg bg-gray-100 p-0.5 text-xs font-semibold">
           {(['board', 'list'] as const).map((v) => (
-            <button key={v} type="button" onClick={() => setView(v)} className={cn('rounded-md px-3 py-1', view === v ? 'bg-white text-navy shadow-sm' : 'text-muted')}>
+            <button key={v} type="button" onClick={() => setView(v)} className={cn('rounded-md px-3 py-1', view === v ? 'bg-surface text-navy shadow-sm' : 'text-muted')}>
               {v === 'board' ? 'Board' : 'Daftar'}
             </button>
           ))}
@@ -119,7 +119,7 @@ export function TaskBoard({
           {COLUMNS.map((status) => {
             const list = filtered.filter((t) => t.status === status);
             return (
-              <div key={status} className="rounded-card bg-white/60 p-2.5" style={{ borderTop: `3px solid ${COLUMN_ACCENT[status]}` }}>
+              <div key={status} className="rounded-card bg-surface/60 p-2.5" style={{ borderTop: `3px solid ${COLUMN_ACCENT[status]}` }}>
                 <h2 className="mb-2.5 flex items-center justify-between px-1 text-xs font-bold uppercase tracking-wide text-muted">
                   {STATUS_LABEL[status]}
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px]">{list.length}</span>
@@ -137,7 +137,7 @@ export function TaskBoard({
           })}
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-card border border-gray-100 bg-white shadow-sm">
+        <div className="mt-4 overflow-x-auto rounded-card border border-gray-100 bg-surface shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wide text-muted">
               <tr><th className="px-4 py-2">Task</th><th>Divisi</th><th>PIC</th><th>Status</th><th>Prioritas</th><th>Deadline</th><th className="pr-4">📎</th></tr>
@@ -153,7 +153,7 @@ export function TaskBoard({
                     <td className="text-xs text-ink">{t.assigneeName ?? '—'}</td>
                     <td>
                       {canWrite(t) ? (
-                        <select value={t.status} disabled={busy} onChange={(e) => changeStatus(t, e.target.value)} className="rounded border border-gray-200 bg-white px-1.5 py-1 text-xs" aria-label={`Status ${t.title}`}>
+                        <select value={t.status} disabled={busy} onChange={(e) => changeStatus(t, e.target.value)} className="rounded border border-gray-200 bg-surface px-1.5 py-1 text-xs" aria-label={`Status ${t.title}`}>
                           {COLUMNS.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
                         </select>
                       ) : <span className="text-xs">{STATUS_LABEL[t.status]}</span>}
@@ -180,7 +180,7 @@ function TaskCardView({ t, projectId, today, divisionColorKey, divisionName, ove
   const c = divisionColor(divisionColorKey);
   const left = t.due_date ? diffDays(t.due_date, today) : null;
   return (
-    <div className="anim-rise rounded-lg border border-gray-100 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" style={{ borderLeft: `4px solid ${c.accent}` }}>
+    <div className="anim-rise rounded-lg border border-gray-100 bg-surface p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" style={{ borderLeft: `4px solid ${c.accent}` }}>
       <Link href={`/projects/${projectId}/tasks/${t.id}`} className="block">
         {divisionName && (
           <span className="mb-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: c.bg, color: c.text }}>{divisionName}</span>
@@ -195,7 +195,7 @@ function TaskCardView({ t, projectId, today, divisionColorKey, divisionName, ove
         <div className="mt-2 flex items-center justify-between">
           {t.assigneeName ? (
             <span className="flex items-center gap-1.5">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-navy text-[10px] font-bold text-white">{initials(t.assigneeName)}</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">{initials(t.assigneeName)}</span>
               <span className="text-xs text-muted">{t.assigneeName}</span>
             </span>
           ) : <span className="text-xs text-muted">Belum ada PIC</span>}

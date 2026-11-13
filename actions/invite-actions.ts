@@ -19,7 +19,7 @@ export async function createInvite(formData: FormData): Promise<ActionResult<{ t
   });
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Input tidak valid' };
 
-  const { data, error } = await createClient().rpc('create_invite', {
+  const { data, error } = await (await createClient()).rpc('create_invite', {
     p_org: parsed.data.organizationId ?? null,
     p_project: parsed.data.projectId ?? null,
     p_division: parsed.data.divisionId ?? null,
@@ -41,7 +41,7 @@ export async function revokeInvite(formData: FormData): Promise<ActionResult> {
   const path = String(formData.get('path') ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(inviteId)) return { success: false, error: 'Link tidak valid.' };
 
-  const { error } = await createClient().rpc('revoke_invite', { p_invite: inviteId });
+  const { error } = await (await createClient()).rpc('revoke_invite', { p_invite: inviteId });
   if (error) return { success: false, error: rpcErrorMessage(error, 'Gagal mencabut link.') };
 
   if (path.startsWith('/')) revalidatePath(path);
@@ -55,7 +55,7 @@ export async function acceptInvite(
   await requireUser();
   if (!/^[A-Za-z0-9]{20,100}$/.test(token)) return { success: false, error: 'Link undangan tidak valid.' };
 
-  const { data, error } = await createClient().rpc('accept_invite', { p_token: token });
+  const { data, error } = await (await createClient()).rpc('accept_invite', { p_token: token });
   if (error || !data) {
     return { success: false, error: error ? rpcErrorMessage(error, 'Gagal bergabung.') : 'Gagal bergabung.' };
   }

@@ -18,13 +18,13 @@ const SOURCE_LABEL: Record<string, string> = { web: 'Halaman depan', festival: '
 function Breakdown({ title, rows }: { title: string; rows: [string, number][] }) {
   const max = Math.max(1, ...rows.map(([, n]) => n));
   return (
-    <div className="rounded-card border border-line bg-white p-5">
+    <div className="rounded-card border border-line bg-surface p-5">
       <h2 className="font-heading text-base font-bold text-ink">{title}</h2>
       <ul className="mt-3 space-y-2.5">
         {rows.map(([label, n]) => (
           <li key={label}>
             <div className="flex justify-between text-sm"><span className="text-gray-600">{label}</span><span className="font-semibold text-ink">{n}</span></div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-navy" style={{ width: `${(n / max) * 100}%` }} /></div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-brand" style={{ width: `${(n / max) * 100}%` }} /></div>
           </li>
         ))}
       </ul>
@@ -60,8 +60,9 @@ export default async function InterestRecapPage() {
           title="Rekap interest check"
           description="Data dari halaman depan, booth festival (/minat), dan dalam aplikasi. Hanya terlihat oleh tim."
           actions={<>
-            <Link href="/minat" target="_blank" className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-gray-50">Buka mode booth</Link>
-            <a href="/admin/interest/export" className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark">Unduh CSV</a>
+            <Link href="/minat" target="_blank" className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-gray-50">Buka mode booth</Link>
+            <Link href="/minat/poster" target="_blank" className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-gray-50">Poster QR</Link>
+            <a href="/admin/interest/export" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Unduh CSV</a>
           </>}
         />
         {error && <p className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">Gagal membaca data. Pastikan migrasi 0005 sudah dijalankan dan SUPABASE_SERVICE_ROLE_KEY terisi.</p>}
@@ -79,7 +80,7 @@ export default async function InterestRecapPage() {
           <Breakdown title="Sumber" rows={count((r) => r.source, SOURCE_LABEL)} />
         </section>
 
-        <section className="overflow-hidden rounded-card border border-line bg-white">
+        <section className="overflow-hidden rounded-card border border-line bg-surface">
           <h2 className="border-b border-line px-5 py-3 font-heading text-base font-bold text-ink">Pendaftar terbaru</h2>
           {list.length === 0 ? (
             <p className="px-5 py-4 text-sm text-muted">Belum ada pendaftar.</p>

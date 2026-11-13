@@ -13,7 +13,7 @@ export default async function OrganizationLayout(
   } = props;
 
   const user = await requireUser();
-  const { data } = await createClient()
+  const { data } = await (await createClient())
     .from('organization_members')
     .select('role, organization:organizations(id, name)')
     .eq('organization_id', params.organizationId)

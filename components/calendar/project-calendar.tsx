@@ -88,7 +88,7 @@ export function ProjectCalendar({ projectId, today, period = { start: null, end:
   ];
 
   return (
-    <div className="rounded-card border border-gray-100 bg-white shadow-sm">
+    <div className="rounded-card border border-gray-100 bg-surface shadow-sm">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export function ProjectCalendar({ projectId, today, period = { start: null, end:
           <div className="inline-flex rounded-lg bg-gray-100 p-0.5 text-xs font-semibold">
             {(['week', 'month'] as const).map((v) => (
               <button key={v} type="button" onClick={() => setView(v)}
-                className={cn('rounded-md px-3 py-1 transition-colors', view === v ? 'bg-white text-navy shadow-sm' : 'text-muted')}>
+                className={cn('rounded-md px-3 py-1 transition-colors', view === v ? 'bg-surface text-navy shadow-sm' : 'text-muted')}>
                 {v === 'week' ? 'Minggu' : 'Bulan'}
               </button>
             ))}
@@ -155,7 +155,7 @@ export function ProjectCalendar({ projectId, today, period = { start: null, end:
                   return (
                     <div key={d} className={cn('py-2 text-center', outside(d) && 'cal-outside')} title={outside(d) ? 'Di luar periode project' : undefined}>
                       <p className="text-[11px] font-semibold uppercase text-muted">{DAY_NAMES_SHORT[i]}</p>
-                      <p className={cn('mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold', isToday ? 'bg-navy text-white' : 'text-ink')}>
+                      <p className={cn('mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold', isToday ? 'bg-brand text-white' : 'text-ink')}>
                         {parseDay(d).getUTCDate()}
                       </p>
                     </div>
@@ -319,7 +319,7 @@ function MiniMonth({ cursor, today, weekStart, onPick, items }: { cursor: string
             <button key={d} type="button" onClick={() => onPick(d)}
               className={cn('relative my-px h-6 transition-colors', inWeek && 'bg-sky/60', d === weekStart && 'rounded-l-md', d === weekEnd && 'rounded-r-md',
                 !inMonth && 'text-gray-300', d === today ? 'font-bold text-white' : 'hover:bg-gray-100')}>
-              {d === today && <span className="absolute inset-0 m-auto h-6 w-6 rounded-full bg-navy" />}
+              {d === today && <span className="absolute inset-0 m-auto h-6 w-6 rounded-full bg-brand" />}
               <span className="relative">{parseDay(d).getUTCDate()}</span>
               {busy.has(d) && d !== today && <span className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-gray-400" />}
             </button>
@@ -347,7 +347,7 @@ function MonthGrid({ cursor, today, items, onSelect, onDayClick, selectedId, out
             return (
               <div key={d} className={cn('min-h-[92px] border-b border-l border-gray-100 p-1', !inMonth && 'bg-gray-50/70', outside(d) && 'cal-outside')}>
                 <button type="button" onClick={() => onDayClick(d)}
-                  className={cn('flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold hover:bg-gray-100', d === today ? 'bg-navy text-white hover:bg-navy' : inMonth ? 'text-ink' : 'text-gray-300')}>
+                  className={cn('flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold hover:bg-gray-100', d === today ? 'bg-brand text-white hover:bg-brand' : inMonth ? 'text-ink' : 'text-gray-300')}>
                   {parseDay(d).getUTCDate()}
                 </button>
                 <div className="mt-0.5 space-y-0.5">

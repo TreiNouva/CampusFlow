@@ -60,7 +60,7 @@ export function BudgetManager({ projectId, plans, entries, divisions, canManage,
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="anim-rise rounded-card border border-gray-100 bg-white p-4 shadow-sm">
+          <div key={s.label} className="anim-rise rounded-card border border-gray-100 bg-surface p-4 shadow-sm">
             <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{s.label}</p>
             <p className={cn('mt-1 font-heading text-xl font-bold', s.tone)}>{s.value}</p>
             {s.sub && <p className="text-xs text-muted">{s.sub}</p>}
@@ -69,7 +69,7 @@ export function BudgetManager({ projectId, plans, entries, divisions, canManage,
       </div>
       {planned > 0 && (
         <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
-          <div className={cn('anim-grow-x h-full rounded-full', pct > 100 ? 'bg-red-500' : pct > 85 ? 'bg-orange' : 'bg-navy')} style={{ width: `${Math.min(100, pct)}%` }} />
+          <div className={cn('anim-grow-x h-full rounded-full', pct > 100 ? 'bg-red-500' : pct > 85 ? 'bg-orange' : 'bg-brand')} style={{ width: `${Math.min(100, pct)}%` }} />
         </div>
       )}
       {unplanned > 0 && (

@@ -19,7 +19,7 @@ export default async function ProjectOverviewPage(props: { params: Promise<{ pro
   const params = await props.params;
   const ctx = await getProjectContext(params.projectId);
   const { project, myRole, userId } = ctx;
-  const supabase = createClient();
+  const supabase = await createClient();
   const today = todayJakarta();
   const pid = project.id;
 
@@ -78,7 +78,7 @@ export default async function ProjectOverviewPage(props: { params: Promise<{ pro
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Kepala halaman */}
-      <div className="rounded-card border border-line bg-white p-5">
+      <div className="rounded-card border border-line bg-surface p-5">
         <p className="text-xs text-muted">{project.organization?.name}</p>
         <h1 className="mt-0.5 font-heading text-xl font-bold text-ink sm:text-2xl">{project.name}</h1>
         {project.description && <p className="mt-1 line-clamp-2 text-sm text-muted">{project.description}</p>}
@@ -106,7 +106,7 @@ export default async function ProjectOverviewPage(props: { params: Promise<{ pro
       </section>
 
       {/* Menu cepat — gaya aplikasi m-banking, hanya di HP/tablet (di laptop sudah ada menu samping) */}
-      <section className="mt-4 rounded-card border border-line bg-white p-4 lg:hidden" aria-label="Menu cepat">
+      <section className="mt-4 rounded-card border border-line bg-surface p-4 lg:hidden" aria-label="Menu cepat">
         <ul className="grid grid-cols-4 gap-y-4">
           {quickMenu.map((m) => (
             <li key={m.href}>

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const nextParam = searchParams.get('next') ?? '/reset-password';
   const next = isAllowedNext(nextParam) ? nextParam : '/reset-password';
 
-  const supabase = createClient();
+  const supabase = await createClient();
   let verified = false;
 
   if (code) {

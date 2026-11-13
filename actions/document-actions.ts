@@ -47,7 +47,7 @@ export async function prepareUpload(input: {
     return { success: false, error: `Ukuran file maksimal ${MAX_DOCUMENT_BYTES / 1024 / 1024} MB.` };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: allowed, error } = await supabase.rpc('can_add_document', {
     p_project: input.projectId, p_task: input.taskId, p_div: input.divisionId,
   });
@@ -87,7 +87,7 @@ export async function registerDocument(input: {
   const stored = found?.find((f) => f.name === input.path.slice(slash + 1));
   if (!stored) return { success: false, error: 'File belum terunggah. Coba lagi.' };
 
-  const { error } = await createClient().from('documents').insert({
+  const { error } = await (await createClient()).from('documents').insert({
     project_id: input.projectId,
     task_id: input.taskId,
     division_id: input.taskId ? null : input.divisionId,
@@ -117,7 +117,7 @@ export async function registerDocument(input: {
 export async function getDocumentUrl(documentId: string): Promise<ActionResult<{ url: string }>> {
   await requireUser();
   if (!uuidRe.test(documentId)) return { success: false, error: 'Dokumen tidak valid.' };
-  const { data: doc } = await createClient().from('documents').select('storage_path, name').eq('id', documentId).maybeSingle();
+  const { data: doc } = await (await createClient()).from('documents').select('storage_path, name').eq('id', documentId).maybeSingle();
   if (!doc) return { success: false, error: 'Dokumen tidak ditemukan atau kamu tidak berhak membukanya.' };
   const { data, error } = await createAdminClient().storage.from(DOCUMENT_BUCKET).createSignedUrl(doc.storage_path, 60, { download: doc.name });
   if (error || !data) return { success: false, error: 'Gagal membuat link unduhan.' };
@@ -127,7 +127,7 @@ export async function getDocumentUrl(documentId: string): Promise<ActionResult<{
 export async function deleteDocument(documentId: string, projectId: string): Promise<ActionResult> {
   await requireUser();
   if (!uuidRe.test(documentId)) return { success: false, error: 'Dokumen tidak valid.' };
-  const { data, error } = await createClient().from('documents').delete().eq('id', documentId).select('storage_path');
+  const { data, error } = await (await createClient()).from('documents').delete().eq('id', documentId).select('storage_path');
   if (error || !data?.length) return { success: false, error: 'Dokumen tidak ditemukan atau kamu tidak berhak menghapusnya.' };
   await createAdminClient().storage.from(DOCUMENT_BUCKET).remove([data[0].storage_path]);
   revalidatePath(`/projects/${projectId}`, 'layout');

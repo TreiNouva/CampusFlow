@@ -18,8 +18,8 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       </p>
       {error.digest && <p className="mt-2 font-mono text-xs text-gray-400">Kode: {error.digest}</p>}
       <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <button type="button" onClick={reset} className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-dark">Coba lagi</button>
-        <Link href="/dashboard" className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-gray-50">Ke Beranda</Link>
+        <button type="button" onClick={reset} className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Coba lagi</button>
+        <Link href="/dashboard" className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-gray-50">Ke Beranda</Link>
       </div>
     </main>
   );
