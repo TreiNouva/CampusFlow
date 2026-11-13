@@ -33,6 +33,9 @@ export async function login(formData: FormData): Promise<ActionResult> {
   });
 
   if (error) {
+    if ((error as any).code === 'email_not_confirmed' || /not confirmed/i.test(error.message)) {
+      return { success: false, error: 'Email belum dikonfirmasi. Buka email dari CampusFlow (cek juga folder Spam) dan klik link konfirmasinya.' };
+    }
     return { success: false, error: 'Email atau password salah.' };
   }
 

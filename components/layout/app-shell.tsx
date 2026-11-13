@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { canViewBudgetRole, memberTitle } from '@/lib/roles';
 import type { ProjectContext } from '@/lib/project-context';
 import { ShellFrame, type MenuSection, type ProjectHeader } from './shell-frame';
+import { looksLikeTeamAdmin } from '@/lib/admin-access';
 
 /**
  * Kerangka aplikasi setelah login (v7), terinspirasi menu m-banking:
@@ -12,9 +13,10 @@ import { ShellFrame, type MenuSection, type ProjectHeader } from './shell-frame'
  */
 export async function AppShell({ children, project, org }: { children: React.ReactNode; project?: ProjectContext; org?: { id: string; name: string; role: string } }) {
   const user = await requireUser();
-  const [profile, { data: orgRows }] = await Promise.all([
+  const [profile, { data: orgRows }, teamAdmin] = await Promise.all([
     getCurrentProfile(),
     createClient().from('organization_members').select('organization:organizations(id, name)').eq('user_id', user.id),
+    looksLikeTeamAdmin(),
   ]);
 
   const organizations = ((orgRows ?? []) as any[])
@@ -78,6 +80,11 @@ export async function AppShell({ children, project, org }: { children: React.Rea
           : [{ href: '/dashboard#create-organization', label: 'Buat organisasi', icon: 'plus' as const }],
       },
     ];
+  }
+
+  // Menu khusus tim CampusFlow (email di ADMIN_EMAILS).
+  if (teamAdmin && !project) {
+    sections = [...sections, { title: 'Tim CampusFlow', items: [{ href: '/admin/interest', label: 'Rekap Interest', icon: 'chart' }] }];
   }
 
   return (
