@@ -386,3 +386,12 @@ dikirim lewat **akun Gmail tim + App Password**:
 **Urutan deploy**
 1. Supabase → SQL Editor → jalankan `supabase/migrations/0007_privacy_archive_inapp_demo.sql` (aman dijalankan sebelum kode baru).
 2. Push kode v8.3 → tunggu Vercel Ready.
+
+## 19. Versi 8.4: Masukan pengguna (tanpa migrasi baru)
+
+- Kartu angka di Ringkasan project bisa diklik: Progress → Statistik, Task aktif / Telat → Task Board yang langsung tersaring, Acara 7 hari → Kalender. Kartu ringkasan di Task Board juga jadi tombol filter.
+- Pengumuman terbaru dipindah ke atas Ringkasan (di bawah judul project), dengan label **BARU** untuk pengumuman ≤ 3 hari.
+- Dokumen bisa dikelompokkan **Per divisi** (Global dulu, lalu tiap divisi), tetap bisa disaring per jenis.
+- Tema mengikuti pengaturan perangkat (gelap/terang) sampai pengguna memilih sendiri lewat tombol tema.
+
+**Deploy:** cukup push kode. Migrasi 0007 dari v8.3 tetap wajib kalau belum dijalankan.

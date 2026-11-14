@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 
@@ -6,12 +7,14 @@ import { cn } from '@/lib/utils';
  * untuk memberi tanda (amber = perlu perhatian, merah = bermasalah).
  */
 export function KpiCard({
-  label, value, hint, icon, alert, progress, delay = 0,
+  label, value, hint, icon, alert, progress, delay = 0, href,
 }: {
   label: string; value: string; hint?: string; icon: IconName; alert?: 'warn' | 'bad'; progress?: number; delay?: number;
+  /** v8.4: kartu bisa diklik (masukan pengguna: refleks menekan kartu angka). */
+  href?: string;
 }) {
-  return (
-    <div className="anim-rise rounded-card border border-line bg-surface p-4" style={{ animationDelay: `${delay}ms` }}>
+  const body = (
+    <>
       <div className="flex items-center gap-2 text-muted">
         <span className={cn('flex h-7 w-7 items-center justify-center rounded-lg bg-gray-50',
           alert === 'bad' ? 'text-red-600' : alert === 'warn' ? 'text-orange' : 'text-navy')}>
@@ -26,6 +29,15 @@ export function KpiCard({
         </div>
       )}
       {hint && <p className="mt-1.5 text-xs text-muted">{hint}</p>}
-    </div>
+      {href && <Icon name="chevronRight" size={16} className="absolute right-3 top-4 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-navy" />}
+    </>
+  );
+  const cls = 'anim-rise rounded-card border border-line bg-surface p-4';
+  if (!href) return <div className={cls} style={{ animationDelay: `${delay}ms` }}>{body}</div>;
+  return (
+    <Link href={href} aria-label={`${label}: ${value}. Lihat detail`}
+      className={cn(cls, 'group relative block transition hover:border-gray-300 hover:shadow-sm active:scale-[0.98]')} style={{ animationDelay: `${delay}ms` }}>
+      {body}
+    </Link>
   );
 }

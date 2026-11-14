@@ -8,9 +8,10 @@ const KEY = 'cf-theme';
 
 /**
  * Dijalankan di <head> sebelum halaman tampil, supaya tidak ada "kedipan" tema terang
- * saat pengguna memilih tema gelap. Default: terang.
+ * saat pengguna memilih tema gelap. Default (v8.4): ikut pengaturan perangkat; setelah pengguna
+ * menekan tombol tema, pilihannya disimpan dan dipakai seterusnya.
  */
-export const THEME_INIT_SCRIPT = `try{if(localStorage.getItem('${KEY}')==='dark')document.documentElement.classList.add('dark')}catch(e){}`;
+export const THEME_INIT_SCRIPT = `try{var t=localStorage.getItem('${KEY}');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`;
 
 function isDarkNow() {
   return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');

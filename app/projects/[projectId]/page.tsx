@@ -8,7 +8,7 @@ import { getProjectContext } from '@/lib/project-context';
 import { addDays, dayOfTimestamp, diffDays, shortDate, todayJakarta, formatTime } from '@/lib/dates';
 import { divisionColor } from '@/lib/colors';
 import { canViewBudgetRole } from '@/lib/roles';
-import { calcProgress, formatDate } from '@/lib/utils';
+import { calcProgress, cn, formatDate } from '@/lib/utils';
 
 /**
  * Ringkasan project (v7) — sengaja dibuat ringan: angka penting, menu cepat (gaya m-banking),
@@ -56,6 +56,11 @@ export default async function ProjectOverviewPage(props: { params: Promise<{ pro
     .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')).slice(0, 4);
 
   const base = `/projects/${pid}`;
+  const annList = (announcements ?? []) as any[];
+  const latest = annList[0] ?? null;
+  const moreCount = Math.max(0, annList.length - 1);
+  // "Baru" = dibuat dalam 3 hari terakhir
+  const isFresh = latest ? Date.now() - new Date(latest.created_at).getTime() < 3 * 86400000 : false;
   const quickMenu: { href: string; label: string; icon: IconName }[] = [
     { href: `${base}/tasks`, label: 'Task', icon: 'tasks' },
     { href: `${base}/calendar`, label: 'Kalender', icon: 'calendar' },
@@ -97,12 +102,34 @@ export default async function ProjectOverviewPage(props: { params: Promise<{ pro
         )}
       </div>
 
+      {/* Pengumuman terbaru — dinaikkan ke atas (v8.4: sebelumnya di paling bawah, mudah terlewat) */}
+      {latest ? (
+        <Link href={`${base}/announcements`}
+          className={cn('anim-rise mt-4 flex gap-3 rounded-card border border-line border-l-4 bg-surface p-4 transition hover:shadow-sm',
+            isFresh ? 'border-l-teal' : 'border-l-gray-300')}>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky text-navy"><Icon name="megaphone" size={18} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">Pengumuman</span>
+              {isFresh && <span className="rounded-full bg-teal px-2 py-0.5 text-[10px] font-bold text-white">BARU</span>}
+            </span>
+            <span className="mt-0.5 block font-semibold text-ink">{latest.title}</span>
+            <span className="line-clamp-2 block text-sm text-gray-600">{latest.body}</span>
+            <span className="mt-1 block text-xs text-muted">
+              {latest.author?.full_name ?? 'Anonim'} · {latest.division?.name ?? 'Global'} · {formatDate(latest.created_at)}
+              {moreCount > 0 && <> · <span className="font-semibold text-navy">Lihat pengumuman lain</span></>}
+            </span>
+          </span>
+          <Icon name="chevronRight" size={18} className="mt-2 shrink-0 text-gray-300" />
+        </Link>
+      ) : null}
+
       {/* Angka penting */}
       <section className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Ringkasan angka">
-        <KpiCard label="Progress" value={`${progress}%`} icon="chart" progress={progress} hint={`${done} dari ${total} task selesai`} />
-        <KpiCard label="Task aktif" value={String(total - done)} icon="tasks" delay={50} hint={myRole === 'member' ? 'Di divisimu' : 'Semua divisi'} />
-        <KpiCard label="Telat" value={String(overdue)} icon="alert" alert={overdue ? 'bad' : undefined} delay={100} hint={overdue ? 'Lewat deadline' : 'Semua tepat waktu'} />
-        <KpiCard label="Acara 7 hari" value={String(eventsWeek)} icon="calendar" delay={150} hint="Jadwal terdekat" />
+        <KpiCard href={`${base}/stats`} label="Progress" value={`${progress}%`} icon="chart" progress={progress} hint={`${done} dari ${total} task selesai`} />
+        <KpiCard href={`${base}/tasks?filter=aktif`} label="Task aktif" value={String(total - done)} icon="tasks" delay={50} hint={myRole === 'member' ? 'Di divisimu' : 'Semua divisi'} />
+        <KpiCard href={`${base}/tasks?filter=telat`} label="Telat" value={String(overdue)} icon="alert" alert={overdue ? 'bad' : undefined} delay={100} hint={overdue ? 'Lewat deadline' : 'Semua tepat waktu'} />
+        <KpiCard href={`${base}/calendar`} label="Acara 7 hari" value={String(eventsWeek)} icon="calendar" delay={150} hint="Jadwal terdekat" />
       </section>
 
       {/* Menu cepat — gaya aplikasi m-banking, hanya di HP/tablet (di laptop sudah ada menu samping) */}
@@ -166,24 +193,6 @@ export default async function ProjectOverviewPage(props: { params: Promise<{ pro
         </div>
       </section>
 
-      <Card className="mt-4">
-        <CardHeader className="flex items-center justify-between">
-          <h2 className="font-heading text-base font-bold text-ink">Pengumuman terbaru</h2>
-          <Link href={`${base}/announcements`} className="text-xs font-semibold text-navy hover:underline">Lihat semua</Link>
-        </CardHeader>
-        <ul className="divide-y divide-line">
-          {(announcements ?? []).length === 0 && <li className="px-5 py-4 text-sm text-muted">Belum ada pengumuman.</li>}
-          {((announcements ?? []) as any[]).map((a) => (
-            <li key={a.id} className="px-5 py-3">
-              <Link href={`${base}/announcements`} className="block">
-                <p className="text-sm font-semibold text-ink">{a.title}</p>
-                <p className="line-clamp-1 text-sm text-muted">{a.body}</p>
-                <p className="mt-0.5 text-xs text-gray-400">{a.author?.full_name ?? 'Anonim'} · {a.division?.name ?? 'Global'} · {formatDate(a.created_at)}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </Card>
     </main>
   );
 }

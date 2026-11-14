@@ -24,13 +24,16 @@ export interface BoardTask {
   attachments: number;
 }
 
+export type QuickFilter = 'aktif' | 'selesai' | 'telat' | 'segera';
+const QUICK_LABEL: Record<QuickFilter, string> = { aktif: 'Task aktif', selesai: 'Selesai', telat: 'Telat', segera: 'Jatuh tempo ≤ 3 hari' };
+
 const COLUMNS: TaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'blocked'];
 const COLUMN_ACCENT: Record<TaskStatus, string> = {
   todo: '#A0A8B4', in_progress: '#2B6C8A', review: '#64748B', done: '#3F8F63', blocked: '#C24141',
 };
 
 export function TaskBoard({
-  projectId, tasks, divisions, myRole, myUserId, myDivisionId, today,
+  projectId, tasks, divisions, myRole, myUserId, myDivisionId, today, initialFilter = null,
 }: {
   projectId: string;
   tasks: BoardTask[];
@@ -39,7 +42,9 @@ export function TaskBoard({
   myUserId: string;
   myDivisionId: string | null;
   today: string;
+  initialFilter?: QuickFilter | null;
 }) {
+  const [quick, setQuick] = useState<QuickFilter | null>(initialFilter);
   const [view, setView] = useState<'board' | 'list'>('board');
   const [q, setQ] = useState('');
   const [div, setDiv] = useState('');
@@ -51,14 +56,19 @@ export function TaskBoard({
   const canWrite = (t: BoardTask) =>
     myRole !== 'ketua' && (myRole !== 'member' || t.assignee_id === myUserId || (!!t.division_id && t.division_id === myDivisionId));
 
+  const isOverdue = (t: BoardTask) => t.status !== 'done' && !!t.due_date && t.due_date < today;
+  const isDueSoon = (t: BoardTask) => t.status !== 'done' && !!t.due_date && t.due_date >= today && diffDays(t.due_date, today) <= 3;
+  const matchQuick = (t: BoardTask) =>
+    !quick || (quick === 'aktif' ? t.status !== 'done' : quick === 'selesai' ? t.status === 'done' : quick === 'telat' ? isOverdue(t) : isDueSoon(t));
+
   const filtered = tasks.filter(
     (t) =>
+      matchQuick(t) &&
       (!q || t.title.toLowerCase().includes(q.toLowerCase())) &&
       (!div || (div === '_none' ? !t.division_id : t.division_id === div)) &&
       (!prio || t.priority === prio) &&
       (!mineOnly || t.assignee_id === myUserId)
   );
-  const isOverdue = (t: BoardTask) => t.status !== 'done' && !!t.due_date && t.due_date < today;
 
   function changeStatus(t: BoardTask, status: string) {
     const fd = new FormData();
@@ -70,22 +80,24 @@ export function TaskBoard({
   const total = tasks.length;
   const done = tasks.filter((t) => t.status === 'done').length;
   const late = tasks.filter(isOverdue).length;
-  const dueSoon = tasks.filter((t) => t.status !== 'done' && t.due_date && t.due_date >= today && diffDays(t.due_date, today) <= 3).length;
+  const dueSoon = tasks.filter(isDueSoon).length;
 
   return (
     <div>
       {/* Ringkasan */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[
-          { label: 'Total task', value: total, tone: 'text-navy' },
-          { label: 'Selesai', value: `${done} (${total ? Math.round((done / total) * 100) : 0}%)`, tone: 'text-navy' },
-          { label: 'Jatuh tempo ≤ 3 hari', value: dueSoon, tone: 'text-orange' },
-          { label: 'Telat', value: late, tone: late ? 'text-red-600' : 'text-muted' },
-        ].map((s) => (
-          <div key={s.label} className="anim-rise rounded-card border border-gray-100 bg-surface px-4 py-3 shadow-sm">
+        {([
+          { label: 'Task aktif', value: total - done, tone: 'text-navy', key: 'aktif' },
+          { label: 'Selesai', value: `${done} (${total ? Math.round((done / total) * 100) : 0}%)`, tone: 'text-navy', key: 'selesai' },
+          { label: 'Jatuh tempo ≤ 3 hari', value: dueSoon, tone: 'text-orange', key: 'segera' },
+          { label: 'Telat', value: late, tone: late ? 'text-red-600' : 'text-muted', key: 'telat' },
+        ] as const).map((s) => (
+          <button key={s.label} type="button" onClick={() => setQuick(quick === s.key ? null : s.key)} aria-pressed={quick === s.key}
+            className={cn('anim-rise rounded-card border bg-surface px-4 py-3 text-left shadow-sm transition hover:border-gray-300 active:scale-[0.98]',
+              quick === s.key ? 'border-navy ring-1 ring-navy' : 'border-gray-100')}>
             <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{s.label}</p>
             <p className={cn('font-heading text-xl font-bold', s.tone)}>{s.value}</p>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -101,6 +113,11 @@ export function TaskBoard({
           <option value="">Semua prioritas</option>
           {(Object.keys(PRIORITY_LABEL) as TaskPriority[]).map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
         </Select>
+        {quick && (
+          <button type="button" onClick={() => setQuick(null)} className="inline-flex items-center gap-1.5 rounded-full bg-sky px-3 py-1 text-xs font-semibold text-navy hover:bg-sky-strong">
+            {QUICK_LABEL[quick]} <span aria-hidden>✕</span><span className="sr-only">hapus filter</span>
+          </button>
+        )}
         <label className="flex items-center gap-1.5 text-xs font-semibold text-muted">
           <input type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} /> Task saya
         </label>

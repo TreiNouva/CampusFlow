@@ -1,13 +1,15 @@
 import { notFound } from 'next/navigation';
 import { CreateTaskForm } from '@/components/tasks/create-task-form';
-import { TaskBoard, type BoardTask } from '@/components/tasks/task-board';
+import { TaskBoard, type BoardTask, type QuickFilter } from '@/components/tasks/task-board';
 import { requireUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { todayJakarta } from '@/lib/dates';
 import type { ProjectRole } from '@/types/database';
 
-export default async function TaskBoardPage(props: { params: Promise<{ projectId: string }> }) {
+export default async function TaskBoardPage(props: { params: Promise<{ projectId: string }>; searchParams: Promise<{ filter?: string }> }) {
   const params = await props.params;
+  const { filter } = await props.searchParams;
+  const initialFilter = (['aktif', 'selesai', 'telat', 'segera'] as const).includes(filter as QuickFilter) ? (filter as QuickFilter) : null;
   const user = await requireUser();
   const supabase = await createClient();
   const today = todayJakarta();
@@ -58,7 +60,7 @@ export default async function TaskBoardPage(props: { params: Promise<{ projectId
           )}
         </div>
         <div className="mt-4">
-          <TaskBoard projectId={project.id} tasks={boardTasks} divisions={(divisions ?? []) as any[]} myRole={myRole} myUserId={user.id} myDivisionId={myDivisionId} today={today} />
+          <TaskBoard projectId={project.id} tasks={boardTasks} divisions={(divisions ?? []) as any[]} myRole={myRole} myUserId={user.id} myDivisionId={myDivisionId} today={today} initialFilter={initialFilter} />
         </div>
       </main>
     </div>
